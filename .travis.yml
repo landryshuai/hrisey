@@ -1,0 +1,16 @@
+language: java
+
+before_install:
+  - ant setupJavaOpenJDK7TestEnvironment
+
+install:
+  - ant dist
+
+before_script:
+  - cp android-lib/* lib/test/
+
+script:
+  - ant test
+
+notifications:
+  email: true
