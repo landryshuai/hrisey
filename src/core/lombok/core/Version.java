@@ -22,15 +22,11 @@
 package lombok.core;
 
 /**
- * This class just holds lombok's current version.
+ * This class just holds hrisey's current version.
  */
 public class Version {
-	// ** CAREFUL ** - this class must always compile with 0 dependencies (it must not refer to any other sources or libraries).
-	// Note: In 'X.Y.Z', if Z is odd, its a snapshot build built from the repository, so many different 0.10.3 versions can exist, for example.
-	// Official builds always end in an even number. (Since 0.10.2).
-	private static final String VERSION = "1.12.7";
-	private static final String RELEASE_NAME = "Edgy Guinea Pig";
-//	private static final String RELEASE_NAME = "Angry Butterfly";
+	private static final String VERSION = "0.1.0";
+	private static final String RELEASE_NAME = "Parcellus Minor";
 	
 	private Version() {
 		//Prevent instantiation
@@ -41,7 +37,7 @@ public class Version {
 	 */
 	public static void main(String[] args) {
 		if (args.length > 0) {
-			System.out.printf("Lombok %s\n", getFullVersion());
+			System.out.printf("Hrisey %s\n", getFullVersion());
 		} else {
 			System.out.println(VERSION);
 		}

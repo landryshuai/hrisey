@@ -1,3 +1,8 @@
+Hrisey Changelog
+
+### v0.1.0 "Parcellus Minor"
+* FEATURE: Support for highly optimized Parcelables with @Parcelable annotation
+
 Lombok Changelog
 ----------------
 

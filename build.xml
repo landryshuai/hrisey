@@ -19,7 +19,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 -->
-<project name="lombok" default="dist" xmlns:ivy="antlib:com.zwitserloot.ivyplusplus">
+<project name="hrisey" default="dist" xmlns:ivy="antlib:com.zwitserloot.ivyplusplus" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<description>
 This buildfile is part of projectlombok.org. It is the main entry point that contains
 the common tasks and can be called on to run the main aspects of all the sub-scripts.
@@ -202,11 +202,11 @@ the common tasks and can be called on to run the main aspects of all the sub-scr
 		<echo file="build/lombok/META-INF/services/javax.annotation.processing.Processor">lombok.core.AnnotationProcessor</echo>
 	</target>
 	
-	<target name="dist" description="Builds THE lombok.jar file which contains everything." depends="version, compile">
+	<target name="dist" description="Builds THE hrisey.jar file which contains everything." depends="version, compile">
 		<mkdir dir="dist" />
 		<copy file="doc/changelog.markdown" tofile="build/changelog.txt" />
 		<taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="lib/build/com.googlecode.jarjar-jarjar.jar" />
-		<jarjar destfile="dist/lombok-${lombok.version}.jar">
+		<jarjar destfile="dist/hrisey-${lombok.version}.jar">
 			<fileset dir="build/lombok">
 				<exclude name="com/sun/tools/javac/**"/>
 			</fileset>
@@ -220,10 +220,10 @@ the common tasks and can be called on to run the main aspects of all the sub-scr
 				<attribute name="Agent-Class" value="lombok.core.Agent" />
 				<attribute name="Can-Redefine-Classes" value="true" />
 				<attribute name="Main-Class" value="lombok.core.Main" />
-				<attribute name="Lombok-Version" value="${lombok.version}" />
+				<attribute name="Hrisey-Version" value="${lombok.version}" />
 			</manifest>
 		</jarjar>
-		<copy file="dist/lombok-${lombok.version}.jar" tofile="dist/lombok.jar" />
+		<copy file="dist/hrisey-${lombok.version}.jar" tofile="dist/hrisey.jar" />
 		<property name="lombok.dist.built" value="true" />
 	</target>
 	
@@ -405,7 +405,7 @@ ${sourceWarning}</echo>
 	
 	<target name="test-ecj" depends="dist, contrib" unless="tests.skip">
 		<java jar="lib/ecj7/org.eclipse.custom-ecj.jar" fork="true" failonerror="true">
-			<jvmarg value="-javaagent:dist/lombok.jar=ecj" />
+			<jvmarg value="-javaagent:dist/hrisey.jar=ecj" />
 			<arg value="-source" />
 			<arg value="1.6" />
 			<arg value="-target" />
@@ -518,7 +518,7 @@ You can also create your own by writing a 'testenvironment.properties' file. The
 
 	<target name="test" depends="-loadTestEnvironmentProperties, -failIfNoTestEnvironmentProperties, -test-compile, dist, test-ecj" unless="tests.skip" description="Runs the tests.">
 		<junit haltonfailure="no" fork="true">
-			<jvmarg value="-javaagent:dist/lombok.jar" />
+			<jvmarg value="-javaagent:dist/hrisey.jar" />
 			<jvmarg value="-Ddelombok.bootclasspath=${test.location.bootclasspath}" />
 			<formatter type="plain" usefile="false" unless="tests.quiet" />
 			<classpath refid="test.path" />
@@ -591,10 +591,10 @@ You can also create your own by writing a 'testenvironment.properties' file. The
 	</target>
 	
 	<target name="maven" depends="version, dist, test, javadoc" description="Build a maven artifact bundle.">
-		<jar destfile="dist/lombok-${lombok.version}-javadoc.jar">
+		<jar destfile="dist/hrisey-${lombok.version}-javadoc.jar">
 			<fileset dir="doc/api" />
 		</jar>
-		<jar destfile="dist/lombok-${lombok.version}-sources.jar">
+		<jar destfile="dist/hrisey-${lombok.version}-sources.jar">
 			<fileset dir="src/core" />
 			<fileset dir="src/utils" />
 			<fileset dir="src/eclipseAgent" />
@@ -613,9 +613,9 @@ You can also create your own by writing a 'testenvironment.properties' file. The
 		</copy>
 		<tar destfile="build/mavenPublish/mavenPublish.tar.bz2" compression="bzip2">
 			<tarfileset dir="dist">
-				<include name="lombok-${lombok.version}.jar" />
-				<include name="lombok-${lombok.version}-sources.jar" />
-				<include name="lombok-${lombok.version}-javadoc.jar" />
+				<include name="hrisey-${lombok.version}.jar" />
+				<include name="hrisey-${lombok.version}-sources.jar" />
+				<include name="hrisey-${lombok.version}-javadoc.jar" />
 			</tarfileset>
 			<tarfileset dir="build/mavenPublish" includes="pom.xml" />
 		</tar>
@@ -668,8 +668,8 @@ You can also create your own by writing a 'testenvironment.properties' file. The
 				username="${google.username}"
 				password="${google.password}"
 				projectname="projectlombok"
-				filename="dist/lombok.jar"
-				targetfilename="lombok-${lombok.version}.jar"
+				filename="dist/hrisey.jar"
+				targetfilename="hrisey-${lombok.version}.jar"
 				summary="Version ${lombok.version}"
 				labels=""
 				verbose="true" />
@@ -677,8 +677,8 @@ You can also create your own by writing a 'testenvironment.properties' file. The
 				username="${google.username}"
 				password="${google.password}" 
 				projectname="projectlombok" 
-				filename="dist/lombok.jar" 
-				targetfilename="lombok.jar"
+				filename="dist/hrisey.jar" 
+				targetfilename="hrisey.jar"
 				summary="Version ${lombok.version} - The everything jar - doubleclick it to install, or just include it in your projects."
 				labels="Featured" 
 				verbose="true" />
@@ -715,5 +715,36 @@ You can also create your own by writing a 'testenvironment.properties' file. The
 		<ant antfile="buildScripts/website.ant.xml" target="website-publish" inheritAll="false">
 			<property name="lombok.version" value="${lombok.version}" />
 		</ant>
+	</target>
+	
+	<target name="stage" depends="maven" description="deploy release version to Maven staging repository">
+		<artifact:mvn>
+			<arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+			<arg value="-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2" />
+			<arg value="-DrepositoryId=sonatype-nexus-staging" />
+			<arg value="-DpomFile=build/mavenPublish/pom.xml" />
+			<arg value="-Dfile=dist/hrisey-${lombok.version}.jar" />
+			<arg value="-Pgpg" />
+		</artifact:mvn>
+
+		<artifact:mvn>
+			<arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+			<arg value="-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2" />
+			<arg value="-DrepositoryId=sonatype-nexus-staging" />
+			<arg value="-DpomFile=build/mavenPublish/pom.xml" />
+			<arg value="-Dfile=dist/hrisey-${lombok.version}-sources.jar" />
+			<arg value="-Dclassifier=sources" />
+			<arg value="-Pgpg" />
+		</artifact:mvn>
+
+		<artifact:mvn>
+			<arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+			<arg value="-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2" />
+			<arg value="-DrepositoryId=sonatype-nexus-staging" />
+			<arg value="-DpomFile=build/mavenPublish/pom.xml" />
+			<arg value="-Dfile=dist/hrisey-${lombok.version}-javadoc.jar" />
+			<arg value="-Dclassifier=javadoc" />
+			<arg value="-Pgpg" />
+		</artifact:mvn>
 	</target>
 </project>
