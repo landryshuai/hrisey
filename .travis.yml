@@ -1,12 +1,8 @@
 language: java
 
-before_install:
-  - ant setupJavaOpenJDK7TestEnvironment
-
-install:
-  - ant dist
-
 before_script:
+  - ant setupJavaOpenJDK7TestEnvironment
+  - mkdir -p lib/test/
   - cp android-lib/* lib/test/
 
 script:
