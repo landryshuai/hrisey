@@ -153,12 +153,23 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	
 	private void addParcelableInterface(JavacNode type) {
 		JCClassDecl clazz = (JCClassDecl) type.get();
-		ListBuffer<JCExpression> newImpl = new ListBuffer<JCExpression>();
-		List<JCExpression> impl = clazz.implementing;
-		newImpl.appendList(impl);
-		JCExpression androidOsParcelable = toExpression(type, "android.os.Parcelable");
-		newImpl.append(androidOsParcelable);
-		clazz.implementing = newImpl.toList();
+		if (!implementsParcelable(clazz)) {
+			ListBuffer<JCExpression> newImpl = new ListBuffer<JCExpression>();
+			newImpl.appendList(clazz.implementing);
+			JCExpression androidOsParcelable = toExpression(type, "android.os.Parcelable");
+			newImpl.append(androidOsParcelable);
+			clazz.implementing = newImpl.toList();
+		}
+	}
+	
+	private boolean implementsParcelable(JCClassDecl classDecl) {
+		List<JCExpression> implList = classDecl.implementing;
+		for (JCExpression impl : implList) {
+			if ("android.os.Parcelable".equals(impl.type.tsym.toString())) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	private JCExpression toExpression(JavacNode type, String name) {
