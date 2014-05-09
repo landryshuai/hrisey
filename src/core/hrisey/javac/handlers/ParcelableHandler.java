@@ -199,7 +199,12 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 		
 		JavacTreeMaker maker = type.getTreeMaker();
 		
-		JCBlock body = maker.Block(0, createWrites(type));
+		ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
+		if (hasParcelableBaseClass(type)) {
+			statements.add(createCallSuperWriteToParcelStatement(type));
+		}
+		statements.addAll(createWrites(type));
+		JCBlock body = maker.Block(0, statements.toList());
 		
 		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(0), type.toName("dest"), toExpression(type, "android.os.Parcel"), null);
 		JCVariableDecl flagsParam = maker.VarDef(maker.Modifiers(0), type.toName("flags"), maker.TypeIdent(CTC_INT), null);
@@ -209,18 +214,48 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 		injectMethod(type, md);
 	}
 	
+	private boolean hasParcelableBaseClass(JavacNode classNode) {
+		JCClassDecl classDecl = (JCClassDecl) classNode.get();
+		if (classDecl.getExtendsClause() == null) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	private JCStatement createCallSuperWriteToParcelStatement(JavacNode classNode) {
+		JavacTreeMaker maker = classNode.getTreeMaker();
+		JCExpression superWriteToParcel = toExpression(classNode, "super.writeToParcel");
+		JCExpression dest = toExpression(classNode, "dest");
+		JCExpression flags = toExpression(classNode, "flags");
+		JCExpression callSuperWriteToParcel = maker.Apply(null, superWriteToParcel, List.<JCExpression>of(dest, flags));
+		return maker.Exec(callSuperWriteToParcel);
+	}
+	
 	private void createConstructorWithParcelParam(JavacNode type) {
 		JCClassDecl clazz = (JCClassDecl) type.get();
 		boolean isFinal = clazz.mods.getFlags().contains(Modifier.FINAL);
 		JavacTreeMaker maker = type.getTreeMaker();
-		List<JCStatement> statements = createConstructorAssignments(type);
-		JCBlock body = maker.Block(0, statements);
+		ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
+		if (hasParcelableBaseClass(type)) {
+			statements.add(createCallSuperConstructorStatement(type));
+		}
+		statements.addAll(createConstructorAssignments(type));
+		JCBlock body = maker.Block(0, statements.toList());
 		
 		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(0), type.toName("source"), toExpression(type, "android.os.Parcel"), null);
 		List<JCVariableDecl> parameters = List.<JCVariableDecl>of(parcelParam);
 		
 		JCMethodDecl md = maker.MethodDef(maker.Modifiers(isFinal ? 0 : Flags.PROTECTED), type.toName("<init>"), null, List.<JCTypeParameter>nil(), parameters, List.<JCExpression>nil(), body, null);
 		injectMethod(type, md);
+	}
+	
+	private JCStatement createCallSuperConstructorStatement(JavacNode classNode) {
+		JavacTreeMaker maker = classNode.getTreeMaker();
+		JCExpression superConstructor = toExpression(classNode, "super");
+		JCExpression source = toExpression(classNode, "source");
+		JCExpression callSuperConstructor = maker.Apply(null, superConstructor, List.<JCExpression>of(source));
+		return maker.Exec(callSuperConstructor);
 	}
 	
 	private List<JCStatement> createWrites(JavacNode type) {
