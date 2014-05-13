@@ -1,4 +1,9 @@
 Hrisey Changelog
+----------------
+
+### v0.1.1 "Parcellus Minor"
+* ENHANCEMENT: Support for extending Parcelable classes
+* ENHANCEMENT: Being able to define your class implements android.os.Parcelable (workaround for IntelliJ plugin limitations)
 
 ### v0.1.0 "Parcellus Minor"
 * FEATURE: Support for highly optimized Parcelables with @Parcelable annotation
