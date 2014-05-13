@@ -10,7 +10,7 @@ Add Hrisey as a dependency:
 
 ```Groovy
 dependencies {
-    provided 'pl.mg6.hrisey:hrisey:0.1.0'
+    provided 'pl.mg6.hrisey:hrisey:0.1.1'
 }
 ```
 
@@ -20,7 +20,7 @@ And then just start using it:
 
 ```Java
 @hrisey.Parcelable
-class ParcelableClass {
+class ParcelableClass implements android.os.Parcelable {
 
     String myString;
 }
@@ -87,17 +87,19 @@ See LICENSE for the Project Lombok license.
 
 To start, run:
 
+```
 ant -projecthelp
+```
 
-HINT: If you'd like to develop lombok in eclipse, run 'ant eclipse' first. It creates the necessary project infrastructure and downloads dependencies. Note that, in order to run "LombokizedEclipse.launch", you need to have "Eclipse SDK" installed.
+HINT: If you'd like to develop lombok in eclipse, run `ant eclipse` first. It creates the necessary project infrastructure and downloads dependencies. Note that, in order to run "LombokizedEclipse.launch", you need to have "Eclipse SDK" installed.
 
-For a list of all authors, see the AUTHORS file. 
+For a list of all authors, see the AUTHORS file.
 
-Project Lombok was started by: 
+Project Lombok was started by:
 
-Reinier Zwitserloot
-twitter: @surial
+Reinier Zwitserloot  
+twitter: @surial  
 home: http://zwitserloot.com/
 
-Roel Spilker
+Roel Spilker  
 twitter: @rspilker
