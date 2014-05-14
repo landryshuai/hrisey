@@ -14,7 +14,7 @@ dependencies {
 }
 ```
 
-Install [Lombok Plugin](http://plugins.jetbrains.com/plugin/6317) in your IntelliJ Idea or Android Studio. (TODO: release Hrisey Plugin)
+Install [Hrisey Plugin](http://plugins.jetbrains.com/plugin/7462) in IntelliJ IDEA or Android Studio.
 
 And then just start using it:
 
