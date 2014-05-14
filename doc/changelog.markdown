@@ -1,6 +1,9 @@
 Hrisey Changelog
 ----------------
 
+### v0.1.2 "Parcellus Minor"
+* BUGFIX: java.lang.NoSuchMethodError: java.lang.Object.size when parceling complex Map type such as Map<String, Map<String, String>>
+
 ### v0.1.1 "Parcellus Minor"
 * ENHANCEMENT: Support for extending Parcelable classes
 * ENHANCEMENT: Being able to define your class implements android.os.Parcelable (workaround for IntelliJ plugin limitations)
