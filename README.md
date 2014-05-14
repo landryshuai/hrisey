@@ -26,6 +26,8 @@ class ParcelableClass implements android.os.Parcelable {
 }
 ```
 
+**Note**: adding `implements android.os.Parcelable` seems redundant, but is there only because of [a limitation when using certain Jetbrains APIs](http://devnet.jetbrains.com/message/5515061). Hrisey will generate it if missing, but IDEA / Android Studio will not undestand it.
+
 This will generate
 
 ```Java
@@ -62,7 +64,7 @@ class ParcelableClass implements android.os.Parcelable {
 
 during preprocessing phase. You will never see this code again!
 
-**Optimization hint**: when possible, add `final` to classes with `@Parcelable` annotation. This is to avoid some reflection and storing unnecessary bits of data.
+**Optimization hint**: when possible, add `final` to classes with `@Parcelable` annotation to avoid some reflection and storing unnecessary bits of data.
 
 Why is Hrisey better?
 ---------------------
