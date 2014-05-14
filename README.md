@@ -62,6 +62,8 @@ class ParcelableClass implements android.os.Parcelable {
 
 during preprocessing phase. You will never see this code again!
 
+**Optimization hint**: when possible, add `final` to classes with `@Parcelable` annotation. This is to avoid some reflection and storing unnecessary bits of data.
+
 Why is Hrisey better?
 ---------------------
 
