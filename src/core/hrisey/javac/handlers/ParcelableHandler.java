@@ -450,13 +450,16 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 				Type valueChildFromValueType = ((ClassType) fromValueType).allparams_field.get(1);
 				JCExpression varType = maker.TypeApply(toExpression(classNode, "java.util.Map.Entry"), List.<JCExpression>of(toExpression(classNode, keyChildFromValueType), toExpression(classNode, valueChildFromValueType)));
 				JCVariableDecl loopVar = maker.VarDef(maker.Modifiers(0), varName, varType, null);
-				JCExpression keyChildFromValue = maker.Apply(null, maker.Select(maker.Ident(varName), classNode.toName("getKey")), List.<JCExpression>nil());
-				JCExpression valueChildFromValue = maker.Apply(null, maker.Select(maker.Ident(varName), classNode.toName("getValue")), List.<JCExpression>nil());
+				
+				JCStatement keyDef = maker.VarDef(maker.Modifiers(0), classNode.toName("__keyVar" + level), toExpression(classNode, keyChildFromValueType), maker.Apply(null, maker.Select(maker.Ident(varName), classNode.toName("getKey")), List.<JCExpression>nil()));
+				JCExpression keyChildFromValue = toExpression(classNode, "__keyVar" + level);
+				JCStatement valueDef = maker.VarDef(maker.Modifiers(0), classNode.toName("__valueVar" + level), toExpression(classNode, valueChildFromValueType), maker.Apply(null, maker.Select(maker.Ident(varName), classNode.toName("getValue")), List.<JCExpression>nil()));
+				JCExpression valueChildFromValue = toExpression(classNode, "__valueVar" + level);
 				
 				JCStatement keyChildStatement = createWriteStatement(classNode, keyChildFromValue, keyChildFromValueType, level + 1);
 				JCStatement valueChildStatement = createWriteStatement(classNode, valueChildFromValue, valueChildFromValueType, level + 1);
 				
-				JCBlock childStatements = maker.Block(0, List.<JCStatement>of(keyChildStatement, valueChildStatement));
+				JCBlock childStatements = maker.Block(0, List.<JCStatement>of(keyDef, valueDef, keyChildStatement, valueChildStatement));
 				JCMethodInvocation fromValueEntries = maker.Apply(null, maker.Select(fromValue, classNode.toName("entrySet")), List.<JCExpression>nil());
 				JCEnhancedForLoop loop = maker.ForeachLoop(loopVar, fromValueEntries, childStatements);
 				JCBlock writeSizeAndLoop = maker.Block(0, List.<JCStatement>of(writeSizeStatement, loop));

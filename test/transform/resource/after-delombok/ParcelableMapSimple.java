@@ -17,8 +17,10 @@ class ParcelableClass implements android.os.Parcelable {
 		} else {
 			dest.writeInt(this.myMap.size());
 			for (java.util.Map.Entry<java.lang.String, java.lang.String> __loopVar1 : this.myMap.entrySet()) {
-				dest.writeString(__loopVar1.getKey());
-				dest.writeString(__loopVar1.getValue());
+				java.lang.String __keyVar1 = __loopVar1.getKey();
+				java.lang.String __valueVar1 = __loopVar1.getValue();
+				dest.writeString(__keyVar1);
+				dest.writeString(__valueVar1);
 			}
 		}
 	}

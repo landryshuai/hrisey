@@ -20,19 +20,21 @@ class ParcelableClass implements android.os.Parcelable {
 		} else {
 			dest.writeInt(this.uberComplex.size());
 			for (java.util.Map.Entry<char[][], java.util.List<java.util.TreeSet<android.os.Bundle>>> __loopVar1 : this.uberComplex.entrySet()) {
-				if (__loopVar1.getKey() == null) {
+				char[][] __keyVar1 = __loopVar1.getKey();
+				java.util.List<java.util.TreeSet<android.os.Bundle>> __valueVar1 = __loopVar1.getValue();
+				if (__keyVar1 == null) {
 					dest.writeInt(-1);
 				} else {
-					dest.writeInt(__loopVar1.getKey().length);
-					for (char[] __loopVar2 : __loopVar1.getKey()) {
+					dest.writeInt(__keyVar1.length);
+					for (char[] __loopVar2 : __keyVar1) {
 						dest.writeCharArray(__loopVar2);
 					}
 				}
-				if (__loopVar1.getValue() == null) {
+				if (__valueVar1 == null) {
 					dest.writeInt(-1);
 				} else {
-					dest.writeInt(__loopVar1.getValue().size());
-					for (java.util.TreeSet<android.os.Bundle> __loopVar2 : __loopVar1.getValue()) {
+					dest.writeInt(__valueVar1.size());
+					for (java.util.TreeSet<android.os.Bundle> __loopVar2 : __valueVar1) {
 						if (__loopVar2 == null) {
 							dest.writeInt(-1);
 						} else {

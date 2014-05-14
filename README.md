@@ -10,11 +10,11 @@ Add Hrisey as a dependency:
 
 ```Groovy
 dependencies {
-    provided 'pl.mg6.hrisey:hrisey:0.1.1'
+    provided 'pl.mg6.hrisey:hrisey:0.1.2'
 }
 ```
 
-Install [Lombok Plugin](http://plugins.jetbrains.com/plugin/6317) in your IntelliJ Idea or Android Studio. (TODO: release Hrisey Plugin)
+Install [Hrisey Plugin](http://plugins.jetbrains.com/plugin/7462) in IntelliJ IDEA or Android Studio.
 
 And then just start using it:
 
@@ -26,6 +26,8 @@ class ParcelableClass implements android.os.Parcelable {
 }
 ```
 
+**Note**: adding `implements android.os.Parcelable` seems redundant, but is there only because of [a limitation when using certain Jetbrains APIs](http://devnet.jetbrains.com/message/5515061). Hrisey will generate it if missing, but IDEA / Android Studio will not undestand it.
+
 This will generate
 
 ```Java
@@ -35,30 +37,24 @@ class ParcelableClass implements android.os.Parcelable {
 
     String myString;
 
-    @java.lang.SuppressWarnings("all")
     public int describeContents() {
         return 0;
     }
 
-    @java.lang.SuppressWarnings("all")
     public void writeToParcel(android.os.Parcel dest, int flags) {
         dest.writeString(this.myString);
     }
 
-    @java.lang.SuppressWarnings("all")
     protected ParcelableClass(android.os.Parcel source) {
         this.myString = source.readString();
     }
 
-    @java.lang.SuppressWarnings("all")
     private static class CreatorImpl implements android.os.Parcelable.Creator<ParcelableClass> {
 
-        @java.lang.SuppressWarnings("all")
         public ParcelableClass createFromParcel(android.os.Parcel source) {
             return new ParcelableClass(source);
         }
 
-        @java.lang.SuppressWarnings("all")
         public ParcelableClass[] newArray(int size) {
             return new ParcelableClass[size];
         }
@@ -67,6 +63,8 @@ class ParcelableClass implements android.os.Parcelable {
 ```
 
 during preprocessing phase. You will never see this code again!
+
+**Optimization hint**: when possible, add `final` to classes with `@Parcelable` annotation to avoid some reflection and storing unnecessary bits of data.
 
 Why is Hrisey better?
 ---------------------
