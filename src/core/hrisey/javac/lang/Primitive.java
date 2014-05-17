@@ -28,7 +28,7 @@ import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 import lombok.javac.JavacTreeMaker.TypeTag;
 
-public class Primitive extends Expression {
+public class Primitive extends TypeExpression {
 	
 	public static final Primitive VOID = new Primitive(Javac.CTC_VOID);
 	public static final Primitive BOOLEAN = new Primitive(Javac.CTC_BOOLEAN);

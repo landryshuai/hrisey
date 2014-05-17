@@ -26,7 +26,7 @@ import lombok.javac.JavacNode;
 
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 
-public class DottedExpression extends Expression {
+public class DottedExpression extends TypeExpression {
 	
 	private final String dotted;
 

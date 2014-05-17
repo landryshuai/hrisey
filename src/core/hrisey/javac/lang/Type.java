@@ -21,13 +21,26 @@
  */
 package hrisey.javac.lang;
 
-public class ParameterCreator {
+import lombok.javac.JavacNode;
+import lombok.javac.JavacResolution;
+import lombok.javac.JavacResolution.TypeNotConvertibleException;
+
+import com.sun.tools.javac.tree.JCTree.JCExpression;
+
+public class Type extends TypeExpression {
 	
-	public static Parameter createParam(String typeName, String varName) {
-		return new Parameter(new DottedExpression(typeName), varName);
+	private com.sun.tools.javac.code.Type type;
+
+	public Type(com.sun.tools.javac.code.Type type) {
+		this.type = type;
 	}
-	
-	public static Parameter createParam(TypeExpression typeName, String varName) {
-		return new Parameter(typeName, varName);
+
+	@Override
+	public JCExpression create(JavacNode node) {
+		try {
+			return JavacResolution.typeToJCTree(type, node.getAst(), false);
+		} catch (TypeNotConvertibleException ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 }

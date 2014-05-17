@@ -21,13 +21,6 @@
  */
 package hrisey.javac.lang;
 
-public class ParameterCreator {
+public abstract class TypeExpression extends Expression {
 	
-	public static Parameter createParam(String typeName, String varName) {
-		return new Parameter(new DottedExpression(typeName), varName);
-	}
-	
-	public static Parameter createParam(TypeExpression typeName, String varName) {
-		return new Parameter(typeName, varName);
-	}
 }

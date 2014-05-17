@@ -36,7 +36,7 @@ import lombok.javac.JavacTreeMaker;
 public class Method {
 	
 	private final List<Modifier> modifiers;
-	private final Primitive returnType;
+	private final TypeExpression returnType;
 	private final String name;
 	private final List<Parameter> parameters;
 	private final Body body;
@@ -45,7 +45,7 @@ public class Method {
 		this(modifiers, null, "<init>", parameters, body);
 	}
 
-	public Method(List<Modifier> modifiers, Primitive returnType, String name, List<Parameter> parameters, Body body) {
+	public Method(List<Modifier> modifiers, TypeExpression returnType, String name, List<Parameter> parameters, Body body) {
 		this.modifiers = modifiers;
 		this.returnType = returnType;
 		this.name = name;

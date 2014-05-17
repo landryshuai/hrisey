@@ -19,15 +19,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package hrisey.javac.lang;
+package hrisey.javac.handlers.util;
 
-public class ParameterCreator {
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+
+import lombok.javac.JavacNode;
+import lombok.javac.JavacResolution;
+
+public class FieldInfo {
 	
-	public static Parameter createParam(String typeName, String varName) {
-		return new Parameter(new DottedExpression(typeName), varName);
+	private final String name;
+	private final Type type;
+
+	public FieldInfo(JavacNode fieldNode) {
+		JCVariableDecl field = (JCVariableDecl) fieldNode.get();
+		this.name = field.name.toString();
+		if (field.type == null) {
+			new JavacResolution(fieldNode.getContext()).resolveClassMember(fieldNode);
+		}
+		this.type = field.type;
 	}
 	
-	public static Parameter createParam(TypeExpression typeName, String varName) {
-		return new Parameter(typeName, varName);
+	public String getName() {
+		return name;
+	}
+	
+	public Type getType() {
+		return type;
+	}
+	
+	public String getNamePascal() {
+		return Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 }

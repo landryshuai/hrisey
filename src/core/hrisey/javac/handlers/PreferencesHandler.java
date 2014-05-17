@@ -32,6 +32,7 @@ import static hrisey.javac.lang.Primitive.*;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
 import hrisey.Preferences;
+import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Call;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
@@ -40,6 +41,7 @@ import lombok.javac.handlers.HandleConstructor;
 
 import org.mangosdk.spi.ProviderFor;
 
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 
@@ -58,11 +60,11 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		}
 		addPrefsConstructor(classNode);
 		for (JavacNode fieldNode : HandleConstructor.findAllFields(classNode)) {
-			
-			addGetMethod(classNode, fieldNode);
-			addSetMethod(classNode, fieldNode);
-			addContainsMethod(classNode, fieldNode);
-			addRemoveMethod(classNode, fieldNode);
+			FieldInfo fieldInfo = new FieldInfo(fieldNode);
+			addGetMethod(classNode, fieldInfo);
+			addSetMethod(classNode, fieldInfo);
+			addContainsMethod(classNode, fieldInfo);
+			addRemoveMethod(classNode, fieldInfo);
 		}
 		addPrefsField(classNode);
 	}
@@ -80,42 +82,52 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		).inject(classNode);
 	}
 	
-	private static void addGetMethod(JavacNode classNode, JavacNode fieldNode) {
-		createMethod(PUBLIC, INT, "getMyInt",
+	private static String getSuffixForField(FieldInfo fieldInfo) {
+		if (fieldInfo.getType().tag == TypeTags.INT) {
+			return "Int";
+		} else {
+			return "String";
+		}
+	}
+	
+	private static void addGetMethod(JavacNode classNode, FieldInfo fieldInfo) {
+		String methodSuffix = getSuffixForField(fieldInfo);
+		createMethod(PUBLIC, createType(fieldInfo.getType()), "get" + fieldInfo.getNamePascal(),
 				createBody(
 						createReturn(
-								createCall("this.__prefs.getInt", createLiteral("myInt"), "this.myInt")
+								createCall("this.__prefs.get" + methodSuffix, createLiteral(fieldInfo.getName()), "this." + fieldInfo.getName())
 						)
 				)
 		).inject(classNode);
 	}
 	
-	private static void addSetMethod(JavacNode classNode, JavacNode fieldNode) {
+	private static void addSetMethod(JavacNode classNode, FieldInfo fieldInfo) {
+		String methodSuffix = getSuffixForField(fieldInfo);
 		Call edit = createCall("this.__prefs.edit");
-		Call putInt = createCall(createSelect(edit, "putInt"), createLiteral("myInt"), "myInt");
+		Call putInt = createCall(createSelect(edit, "put" + methodSuffix), createLiteral(fieldInfo.getName()), fieldInfo.getName());
 		Call apply = createCall(createSelect(putInt, "apply"));
-		createMethod(PUBLIC, VOID, "setMyInt", createParam(INT, "myInt"),
+		createMethod(PUBLIC, VOID, "set" + fieldInfo.getNamePascal(), createParam(createType(fieldInfo.getType()), fieldInfo.getName()),
 				createBody(
 						createExec(apply)
 				)
 		).inject(classNode);
 	}
 	
-	private static void addContainsMethod(JavacNode classNode, JavacNode fieldNode) {
-		createMethod(PUBLIC, BOOLEAN, "containsMyInt",
+	private static void addContainsMethod(JavacNode classNode, FieldInfo fieldInfo) {
+		createMethod(PUBLIC, BOOLEAN, "contains" + fieldInfo.getNamePascal(),
 				createBody(
 						createReturn(
-								createCall("this.__prefs.contains", createLiteral("myInt"))
+								createCall("this.__prefs.contains", createLiteral(fieldInfo.getName()))
 						)
 				)
 		).inject(classNode);
 	}
 	
-	private static void addRemoveMethod(JavacNode classNode, JavacNode fieldNode) {
+	private static void addRemoveMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		Call edit = createCall("this.__prefs.edit");
-		Call remove = createCall(createSelect(edit, "remove"), createLiteral("myInt"));
+		Call remove = createCall(createSelect(edit, "remove"), createLiteral(fieldInfo.getName()));
 		Call apply = createCall(createSelect(remove, "apply"));
-		createMethod(PUBLIC, VOID, "removeMyInt",
+		createMethod(PUBLIC, VOID, "remove" + fieldInfo.getNamePascal(),
 				createBody(
 						createExec(apply)
 				)

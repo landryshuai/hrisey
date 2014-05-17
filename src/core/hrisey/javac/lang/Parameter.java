@@ -28,10 +28,10 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 
 public class Parameter {
 	
-	private final Expression typeName;
+	private final TypeExpression typeName;
 	private final String varName;
 	
-	Parameter(Expression typeName, String varName) {
+	Parameter(TypeExpression typeName, String varName) {
 		this.typeName = typeName;
 		this.varName = varName;
 	}

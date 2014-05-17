@@ -52,4 +52,8 @@ public class ExpressionCreator {
 	public static Select createSelect(Expression expression, String selector) {
 		return new Select(expression, selector);
 	}
+	
+	public static Type createType(com.sun.tools.javac.code.Type type) {
+		return new Type(type);
+	}
 }
