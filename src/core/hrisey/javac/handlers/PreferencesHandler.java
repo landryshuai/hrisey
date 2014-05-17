@@ -39,12 +39,16 @@ import hrisey.javac.handlers.util.FieldFinder;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Call;
 import hrisey.javac.lang.Expression;
+import hrisey.javac.lang.NewInstance;
+import hrisey.javac.lang.Statement;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
 
 import org.mangosdk.spi.ProviderFor;
 
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
@@ -103,6 +107,14 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 			}
 		}
 		return false;
+	}
+	
+	private static boolean isGenericType(FieldInfo fieldInfo) {
+		Type type = fieldInfo.getType();
+		while (type instanceof ArrayType) {
+			type = ((ArrayType) type).elemtype;
+		}
+		return type.getTypeArguments().nonEmpty();
 	}
 	
 	private static void addPrefsField(JavacNode classNode) {
@@ -188,6 +200,17 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	
 	private static void addComplexGetMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		String localVar = fieldInfo.getName() + "String";
+		Statement happyPathBlock;
+		if (isGenericType(fieldInfo)) {
+			String typeVar = fieldInfo.getName() + "Type";
+			NewInstance instance = createNewInstance(createType("com.google.gson.reflect.TypeToken", fieldInfo.getType()));
+			happyPathBlock = createBlock(
+					createVariable("java.lang.reflect.Type", typeVar, createCall(createSelect(instance, "getType"))),
+					createReturn(createCall("this.__gson.fromJson", localVar, typeVar))
+			);
+		} else {
+			happyPathBlock = createBlock(createReturn(createCall("this.__gson.fromJson", localVar, createSelect(createType(fieldInfo.getType()), "class"))));
+		}
 		Expression getString = createCall("this.__prefs.getString", createLiteral(fieldInfo.getName()), createLiteral("DEFAULT"));
 		createMethod(PUBLIC, createType(fieldInfo.getType()), "get" + fieldInfo.getNamePascal(),
 				createBlock(
@@ -196,7 +219,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 								createBlock(createReturn(createNull())),
 								createIf(createCall(localVar + ".equals", createLiteral("DEFAULT")),
 										createBlock(createReturn(createIdent("this." + fieldInfo.getName()))),
-										createBlock(createReturn(createCall("this.__gson.fromJson", localVar, createSelect(createType(fieldInfo.getType()), "class"))))
+										happyPathBlock
 								)
 						)
 				)
@@ -205,6 +228,17 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	
 	private static void addComplexSetMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		String localVar = fieldInfo.getName() + "String";
+		Statement happyPathBlock;
+		if (isGenericType(fieldInfo)) {
+			String typeVar = fieldInfo.getName() + "Type";
+			NewInstance instance = createNewInstance(createType("com.google.gson.reflect.TypeToken", fieldInfo.getType()));
+			happyPathBlock = createBlock(
+					createVariable("java.lang.reflect.Type", typeVar, createCall(createSelect(instance, "getType"))),
+					createAssignment(localVar, createCall("this.__gson.toJson", fieldInfo.getName(), typeVar))
+			);
+		} else {
+			happyPathBlock = createBlock(createAssignment(localVar, createCall("this.__gson.toJson", fieldInfo.getName())));
+		}
 		Call edit = createCall("this.__prefs.edit");
 		Call putType = createCall(createSelect(edit, "putString"), createLiteral(fieldInfo.getName()), localVar);
 		Call apply = createCall(createSelect(putType, "apply"));
@@ -213,7 +247,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 						createVariable("java.lang.String", localVar),
 						createIf(createEquals(fieldInfo.getName(), createNull()),
 								createBlock(createAssignment(localVar, createNull())),
-								createBlock(createAssignment(localVar, createCall("this.__gson.toJson", fieldInfo.getName())))
+								happyPathBlock
 						),
 						createExec(apply)
 				)
