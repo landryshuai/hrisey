@@ -1,8 +1,8 @@
 import java.util.List;
 
 class PrefsClass {
-	private final android.content.SharedPreferences __prefs;
 	private final com.google.gson.Gson __gson;
+	private final android.content.SharedPreferences __prefs;
 	private List<String> myList;
 	
 	@java.lang.SuppressWarnings("all")
@@ -19,21 +19,21 @@ class PrefsClass {
 		} else if (myListString.equals("DEFAULT")) {
 			return this.myList;
 		} else {
-			java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<java.util.List<java.lang.String>>(){
+			java.lang.reflect.Type myListType = new com.google.gson.reflect.TypeToken<java.util.List<java.lang.String>>(){
 			}.getType();
-			return this.__gson.fromJson(myListString, type);
+			return this.__gson.fromJson(myListString, myListType);
 		}
 	}
 	
 	@java.lang.SuppressWarnings("all")
 	public void setMyList(java.util.List<java.lang.String> myList) {
-		String myListString;
+		java.lang.String myListString;
 		if (myList == null) {
 			myListString = null;
 		} else {
-			java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<java.util.List<java.lang.String>>(){
+			java.lang.reflect.Type myListType = new com.google.gson.reflect.TypeToken<java.util.List<java.lang.String>>(){
 			}.getType();
-			myListString = __gson.toJson(myList, type);
+			myListString = this.__gson.toJson(myList, myListType);
 		}
 		this.__prefs.edit().putString("myList", myListString).apply();
 	}

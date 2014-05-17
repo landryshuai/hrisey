@@ -21,31 +21,31 @@
  */
 package hrisey.javac.lang;
 
-import lombok.javac.Javac;
+import static lombok.javac.handlers.JavacHandlerUtil.chainDotsString;
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
-import com.sun.tools.javac.tree.JCTree.JCLiteral;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
 
-public class Literal extends Expression {
+public class Variable extends Statement {
 	
-	private final Object value;
-	
-	public Literal() {
-		this.value = null;
+	private String typeName;
+	private String varName;
+	private Expression assignment;
+
+	public Variable(String typeName, String varName, Expression assignment) {
+		this.typeName = typeName;
+		this.varName = varName;
+		this.assignment = assignment;
 	}
-	
-	public Literal(String stringValue) {
-		this.value = stringValue;
-	}
-	
+
 	@Override
-	public JCLiteral create(JavacNode node) {
+	public JCStatement create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		if (value == null) {
-			return maker.Literal(Javac.CTC_BOT, null);
-		} else {
-			return maker.Literal(value);
-		}
+		return maker.VarDef(maker.Modifiers(0),
+				node.toName(varName),
+				chainDotsString(node, typeName),
+				assignment != null ? assignment.create(node) : null);
 	}
+	
 }

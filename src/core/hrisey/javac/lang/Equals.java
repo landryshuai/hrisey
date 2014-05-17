@@ -25,27 +25,21 @@ import lombok.javac.Javac;
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
-import com.sun.tools.javac.tree.JCTree.JCLiteral;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
 
-public class Literal extends Expression {
+public class Equals extends Expression {
 	
-	private final Object value;
-	
-	public Literal() {
-		this.value = null;
+	private Expression left;
+	private Expression right;
+
+	public Equals(Expression left, Expression right) {
+		this.left = left;
+		this.right = right;
 	}
-	
-	public Literal(String stringValue) {
-		this.value = stringValue;
-	}
-	
+
 	@Override
-	public JCLiteral create(JavacNode node) {
+	public JCExpression create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		if (value == null) {
-			return maker.Literal(Javac.CTC_BOT, null);
-		} else {
-			return maker.Literal(value);
-		}
+		return maker.Binary(Javac.CTC_EQUAL, left.create(node), right.create(node));
 	}
 }

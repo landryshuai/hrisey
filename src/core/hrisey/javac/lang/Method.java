@@ -39,13 +39,13 @@ public class Method {
 	private final TypeExpression returnType;
 	private final String name;
 	private final List<Parameter> parameters;
-	private final Body body;
+	private final Block body;
 
-	public Method(List<Modifier> modifiers, List<Parameter> parameters, Body body) {
+	public Method(List<Modifier> modifiers, List<Parameter> parameters, Block body) {
 		this(modifiers, null, "<init>", parameters, body);
 	}
 
-	public Method(List<Modifier> modifiers, TypeExpression returnType, String name, List<Parameter> parameters, Body body) {
+	public Method(List<Modifier> modifiers, TypeExpression returnType, String name, List<Parameter> parameters, Block body) {
 		this.modifiers = modifiers;
 		this.returnType = returnType;
 		this.name = name;

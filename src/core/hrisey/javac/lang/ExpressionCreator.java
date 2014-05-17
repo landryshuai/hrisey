@@ -45,6 +45,10 @@ public class ExpressionCreator {
 		return createCall(new DottedExpression(method), argument1);
 	}
 	
+	public static Call createCall(String method, String argument1, Expression argument2) {
+		return createCall(new DottedExpression(method), new DottedExpression(argument1), argument2);
+	}
+	
 	public static Call createCall(String method, Expression argument1, String argument2) {
 		return createCall(new DottedExpression(method), argument1, new DottedExpression(argument2));
 	}
@@ -67,5 +71,13 @@ public class ExpressionCreator {
 	
 	public static Type createType(com.sun.tools.javac.code.Type type) {
 		return new Type(type);
+	}
+	
+	public static Equals createEquals(String left, Expression right) {
+		return new Equals(new DottedExpression(left), right);
+	}
+	
+	public static Literal createNull() {
+		return new Literal();
 	}
 }

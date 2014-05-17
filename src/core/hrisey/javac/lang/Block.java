@@ -21,31 +21,30 @@
  */
 package hrisey.javac.lang;
 
-import lombok.javac.Javac;
+import java.util.List;
+
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
-import com.sun.tools.javac.tree.JCTree.JCLiteral;
+import com.sun.tools.javac.tree.JCTree.JCBlock;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
+import com.sun.tools.javac.util.ListBuffer;
 
-public class Literal extends Expression {
+public class Block extends Statement {
 	
-	private final Object value;
-	
-	public Literal() {
-		this.value = null;
+	private final List<Statement> statements;
+
+	public Block(List<Statement> statements) {
+		this.statements = statements;
 	}
-	
-	public Literal(String stringValue) {
-		this.value = stringValue;
-	}
-	
+
 	@Override
-	public JCLiteral create(JavacNode node) {
+	public JCBlock create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		if (value == null) {
-			return maker.Literal(Javac.CTC_BOT, null);
-		} else {
-			return maker.Literal(value);
+		ListBuffer<JCStatement> list = new ListBuffer<JCStatement>();
+		for (Statement statement : statements) {
+			list.add(statement.create(node));
 		}
+		return maker.Block(0, list.toList());
 	}
 }

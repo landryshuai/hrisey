@@ -21,11 +21,11 @@
  */
 package hrisey.javac.lang;
 
-import java.util.Collections;
+import java.util.Arrays;
 
-public class BodyCreator {
+public class BlockCreator {
 	
-	public static Body createBody(Statement statement) {
-		return new Body(Collections.singletonList(statement));
+	public static Block createBlock(Statement... statements) {
+		return new Block(Arrays.asList(statements));
 	}
 }

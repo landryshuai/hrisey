@@ -21,11 +21,16 @@
  */
 package hrisey.javac.lang;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 public class ConstructorCreator {
 	
-	public static Method createConstructor(Modifier modifier, Parameter parameter, Body body) {
+	public static Method createConstructor(Modifier modifier, Parameter parameter, Block body) {
 		return new Method(Collections.singletonList(modifier), Collections.singletonList(parameter), body);
+	}
+	
+	public static Method createConstructor(Modifier modifier, Parameter parameter1, Parameter parameter2, Block body) {
+		return new Method(Collections.singletonList(modifier), Arrays.asList(parameter1, parameter2), body);
 	}
 }

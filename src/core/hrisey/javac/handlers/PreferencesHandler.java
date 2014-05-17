@@ -21,7 +21,7 @@
  */
 package hrisey.javac.handlers;
 
-import static hrisey.javac.lang.BodyCreator.*;
+import static hrisey.javac.lang.BlockCreator.*;
 import static hrisey.javac.lang.ConstructorCreator.*;
 import static hrisey.javac.lang.ExpressionCreator.*;
 import static hrisey.javac.lang.FieldCreator.*;
@@ -31,6 +31,9 @@ import static hrisey.javac.lang.ParameterCreator.*;
 import static hrisey.javac.lang.Primitive.*;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
+
+import java.util.List;
+
 import hrisey.Preferences;
 import hrisey.javac.handlers.util.FieldFinder;
 import hrisey.javac.handlers.util.FieldInfo;
@@ -59,25 +62,74 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 			annotationNode.addError("@Preferences is only supported on classes.");
 			return;
 		}
-		addPrefsConstructor(classNode);
-		for (FieldInfo fieldInfo : FieldFinder.findAllFields(classNode)) {
-			addGetMethod(classNode, fieldInfo);
-			addSetMethod(classNode, fieldInfo);
+		List<FieldInfo> infos = FieldFinder.findAllFields(classNode);
+		addPrefsField(classNode);
+		if (hasComplexType(infos)) {
+			addGsonField(classNode);
+			addPrefsAndGsonConstructor(classNode);
+		} else {
+			addPrefsConstructor(classNode);
+		}
+		for (FieldInfo fieldInfo : infos) {
+			if (isComplexType(fieldInfo)) {
+				addComplexGetMethod(classNode, fieldInfo);
+				addComplexSetMethod(classNode, fieldInfo);
+			} else {
+				addGetMethod(classNode, fieldInfo);
+				addSetMethod(classNode, fieldInfo);
+			}
 			addContainsMethod(classNode, fieldInfo);
 			addRemoveMethod(classNode, fieldInfo);
 		}
-		addPrefsField(classNode);
 	}
-
+	
+	private static boolean hasComplexType(List<FieldInfo> infos) {
+		for (FieldInfo fieldInfo : infos) {
+			if (isComplexType(fieldInfo)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static boolean isComplexType(FieldInfo fieldInfo) {
+		int tag = fieldInfo.getType().tag;
+		if (tag == TypeTags.ARRAY) {
+			return true;
+		}
+		if (tag == TypeTags.CLASS) {
+			if (!"java.lang.String".equals(fieldInfo.getType().tsym.toString())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	private static void addPrefsField(JavacNode classNode) {
 		createField(PRIVATE, FINAL, "android.content.SharedPreferences", "__prefs")
+				.inject(classNode);
+	}
+
+	private static void addGsonField(JavacNode classNode) {
+		createField(PRIVATE, FINAL, "com.google.gson.Gson", "__gson")
 				.inject(classNode);
 	}
 	
 	private static void addPrefsConstructor(JavacNode classNode) {
 		createConstructor(PUBLIC, createParam("android.content.SharedPreferences", "prefs"),
-				createBody(
+				createBlock(
 						createAssignment("this.__prefs", "prefs")
+				)
+		).inject(classNode);
+	}
+	
+	private static void addPrefsAndGsonConstructor(JavacNode classNode) {
+		createConstructor(PUBLIC,
+				createParam("android.content.SharedPreferences", "prefs"),
+				createParam("com.google.gson.Gson", "gson"),
+				createBlock(
+						createAssignment("this.__prefs", "prefs"),
+						createAssignment("this.__gson", "gson")
 				)
 		).inject(classNode);
 	}
@@ -110,7 +162,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 			returnedExpression = createCall("Double.longBitsToDouble", returnedExpression);
 		}
 		createMethod(PUBLIC, createType(fieldInfo.getType()), "get" + fieldInfo.getNamePascal(),
-				createBody(
+				createBlock(
 						createReturn(returnedExpression)
 				)
 		).inject(classNode);
@@ -128,7 +180,41 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		Call putType = createCall(createSelect(edit, "put" + methodSuffix), createLiteral(fieldInfo.getName()), value);
 		Call apply = createCall(createSelect(putType, "apply"));
 		createMethod(PUBLIC, VOID, "set" + fieldInfo.getNamePascal(), createParam(createType(fieldInfo.getType()), fieldInfo.getName()),
-				createBody(
+				createBlock(
+						createExec(apply)
+				)
+		).inject(classNode);
+	}
+	
+	private static void addComplexGetMethod(JavacNode classNode, FieldInfo fieldInfo) {
+		String localVar = fieldInfo.getName() + "String";
+		Expression getString = createCall("this.__prefs.getString", createLiteral(fieldInfo.getName()), createLiteral("DEFAULT"));
+		createMethod(PUBLIC, createType(fieldInfo.getType()), "get" + fieldInfo.getNamePascal(),
+				createBlock(
+						createVariable("java.lang.String", localVar, getString),
+						createIf(createEquals(localVar, createNull()),
+								createBlock(createReturn(createNull())),
+								createIf(createCall(localVar + ".equals", createLiteral("DEFAULT")),
+										createBlock(createReturn(createIdent("this." + fieldInfo.getName()))),
+										createBlock(createReturn(createCall("this.__gson.fromJson", localVar, createSelect(createType(fieldInfo.getType()), "class"))))
+								)
+						)
+				)
+		).inject(classNode);
+	}
+	
+	private static void addComplexSetMethod(JavacNode classNode, FieldInfo fieldInfo) {
+		String localVar = fieldInfo.getName() + "String";
+		Call edit = createCall("this.__prefs.edit");
+		Call putType = createCall(createSelect(edit, "putString"), createLiteral(fieldInfo.getName()), localVar);
+		Call apply = createCall(createSelect(putType, "apply"));
+		createMethod(PUBLIC, VOID, "set" + fieldInfo.getNamePascal(), createParam(createType(fieldInfo.getType()), fieldInfo.getName()),
+				createBlock(
+						createVariable("java.lang.String", localVar),
+						createIf(createEquals(fieldInfo.getName(), createNull()),
+								createBlock(createAssignment(localVar, createNull())),
+								createBlock(createAssignment(localVar, createCall("this.__gson.toJson", fieldInfo.getName())))
+						),
 						createExec(apply)
 				)
 		).inject(classNode);
@@ -136,7 +222,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	
 	private static void addContainsMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		createMethod(PUBLIC, BOOLEAN, "contains" + fieldInfo.getNamePascal(),
-				createBody(
+				createBlock(
 						createReturn(
 								createCall("this.__prefs.contains", createLiteral(fieldInfo.getName()))
 						)
@@ -149,7 +235,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		Call remove = createCall(createSelect(edit, "remove"), createLiteral(fieldInfo.getName()));
 		Call apply = createCall(createSelect(remove, "apply"));
 		createMethod(PUBLIC, VOID, "remove" + fieldInfo.getNamePascal(),
-				createBody(
+				createBlock(
 						createExec(apply)
 				)
 		).inject(classNode);

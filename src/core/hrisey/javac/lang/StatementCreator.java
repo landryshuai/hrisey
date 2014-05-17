@@ -24,7 +24,11 @@ package hrisey.javac.lang;
 public class StatementCreator {
 	
 	public static Assignment createAssignment(String left, String right) {
-		return new Assignment(left, right);
+		return new Assignment(new DottedExpression(left), new DottedExpression(right));
+	}
+	
+	public static Assignment createAssignment(String left, Expression right) {
+		return new Assignment(new DottedExpression(left), right);
 	}
 	
 	public static Return createReturn(Expression expression) {
@@ -33,5 +37,17 @@ public class StatementCreator {
 	
 	public static Execution createExec(Expression expression) {
 		return new Execution(expression);
+	}
+	
+	public static Variable createVariable(String typeName, String varName, Expression assignment) {
+		return new Variable(typeName, varName, assignment);
+	}
+	
+	public static Variable createVariable(String typeName, String varName) {
+		return new Variable(typeName, varName, null);
+	}
+	
+	public static If createIf(Expression booleanExpression, Statement ifTrue, Statement ifFalse) {
+		return new If(booleanExpression, ifTrue, ifFalse);
 	}
 }

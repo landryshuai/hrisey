@@ -21,7 +21,6 @@
  */
 package hrisey.javac.lang;
 
-import static lombok.javac.handlers.JavacHandlerUtil.chainDotsString;
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
@@ -29,10 +28,10 @@ import com.sun.tools.javac.tree.JCTree.JCStatement;
 
 public class Assignment extends Statement {
 
-	private final String left;
-	private final String right;
+	private final Expression left;
+	private final Expression right;
 	
-	public Assignment(String left, String right) {
+	public Assignment(Expression left, Expression right) {
 		this.left = left;
 		this.right = right;
 	}
@@ -40,7 +39,7 @@ public class Assignment extends Statement {
 	@Override
 	public JCStatement create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		JCStatement assignment = maker.Exec(maker.Assign(chainDotsString(node, left), chainDotsString(node, right)));
+		JCStatement assignment = maker.Exec(maker.Assign(left.create(node), right.create(node)));
 		return assignment;
 	}
 }

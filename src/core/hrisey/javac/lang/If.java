@@ -21,29 +21,27 @@
  */
 package hrisey.javac.lang;
 
-import java.util.List;
-
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
-import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
-import com.sun.tools.javac.util.ListBuffer;
 
-public class Body {
+public class If extends Statement {
 	
-	private final List<Statement> statements;
+	private Expression booleanExpression;
+	private Statement ifTrue;
+	private Statement ifFalse;
 
-	public Body(List<Statement> statements) {
-		this.statements = statements;
+	public If(Expression booleanExpression, Statement ifTrue, Statement ifFalse) {
+		this.booleanExpression = booleanExpression;
+		this.ifTrue = ifTrue;
+		this.ifFalse = ifFalse;
 	}
 
-	public JCBlock create(JavacNode node) {
+	@Override
+	public JCStatement create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		ListBuffer<JCStatement> list = new ListBuffer<JCStatement>();
-		for (Statement statement : statements) {
-			list.add(statement.create(node));
-		}
-		return maker.Block(0, list.toList());
+		return maker.If(booleanExpression.create(node), ifTrue.create(node), ifFalse.create(node));
 	}
+	
 }
