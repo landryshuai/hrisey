@@ -1,6 +1,6 @@
 class PrefsClass {
+	private final android.content.SharedPreferences __prefs;
 	private int myInt;
-	private android.content.SharedPreferences __prefs;
 	
 	@java.lang.SuppressWarnings("all")
 	public PrefsClass(android.content.SharedPreferences prefs) {

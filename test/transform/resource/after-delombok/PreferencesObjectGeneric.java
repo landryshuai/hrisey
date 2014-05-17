@@ -1,9 +1,9 @@
 import java.util.List;
 
 class PrefsClass {
+	private final android.content.SharedPreferences __prefs;
+	private final com.google.gson.Gson __gson;
 	private List<String> myList;
-	private android.content.SharedPreferences __prefs;
-	private com.google.gson.Gson __gson;
 	
 	@java.lang.SuppressWarnings("all")
 	public PrefsClass(android.content.SharedPreferences prefs, com.google.gson.Gson gson) {
