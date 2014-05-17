@@ -35,6 +35,7 @@ import hrisey.Preferences;
 import hrisey.javac.handlers.util.FieldFinder;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Call;
+import hrisey.javac.lang.Expression;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
@@ -89,7 +90,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 			return "Float";
 		} else if (tag == TypeTags.INT) {
 			return "Int";
-		} else if (tag == TypeTags.LONG) {
+		} else if (tag == TypeTags.LONG || tag == TypeTags.DOUBLE) {
 			return "Long";
 		} else {
 			return "String";
@@ -98,11 +99,19 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	
 	private static void addGetMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		String methodSuffix = getSuffixForField(fieldInfo);
+		Expression defaultValue;
+		if (fieldInfo.getType().tag == TypeTags.DOUBLE) {
+			defaultValue = createCall("Double.doubleToLongBits", "this." + fieldInfo.getName());
+		} else {
+			defaultValue = createIdent("this." + fieldInfo.getName());
+		}
+		Expression returnedExpression = createCall("this.__prefs.get" + methodSuffix, createLiteral(fieldInfo.getName()), defaultValue);
+		if (fieldInfo.getType().tag == TypeTags.DOUBLE) {
+			returnedExpression = createCall("Double.longBitsToDouble", returnedExpression);
+		}
 		createMethod(PUBLIC, createType(fieldInfo.getType()), "get" + fieldInfo.getNamePascal(),
 				createBody(
-						createReturn(
-								createCall("this.__prefs.get" + methodSuffix, createLiteral(fieldInfo.getName()), "this." + fieldInfo.getName())
-						)
+						createReturn(returnedExpression)
 				)
 		).inject(classNode);
 	}
@@ -110,8 +119,14 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	private static void addSetMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		String methodSuffix = getSuffixForField(fieldInfo);
 		Call edit = createCall("this.__prefs.edit");
-		Call putInt = createCall(createSelect(edit, "put" + methodSuffix), createLiteral(fieldInfo.getName()), fieldInfo.getName());
-		Call apply = createCall(createSelect(putInt, "apply"));
+		Expression value;
+		if (fieldInfo.getType().tag == TypeTags.DOUBLE) {
+			value = createCall("Double.doubleToLongBits", fieldInfo.getName());
+		} else {
+			value = createIdent(fieldInfo.getName());
+		}
+		Call putType = createCall(createSelect(edit, "put" + methodSuffix), createLiteral(fieldInfo.getName()), value);
+		Call apply = createCall(createSelect(putType, "apply"));
 		createMethod(PUBLIC, VOID, "set" + fieldInfo.getNamePascal(), createParam(createType(fieldInfo.getType()), fieldInfo.getName()),
 				createBody(
 						createExec(apply)

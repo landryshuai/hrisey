@@ -37,6 +37,10 @@ public class ExpressionCreator {
 		return createCall(new DottedExpression(method));
 	}
 	
+	public static Call createCall(String method, String argument) {
+		return createCall(new DottedExpression(method), new DottedExpression(argument));
+	}
+	
 	public static Call createCall(String method, Expression argument1) {
 		return createCall(new DottedExpression(method), argument1);
 	}
@@ -45,8 +49,16 @@ public class ExpressionCreator {
 		return createCall(new DottedExpression(method), argument1, new DottedExpression(argument2));
 	}
 	
+	public static Call createCall(String method, Expression argument1, Expression argument2) {
+		return createCall(new DottedExpression(method), argument1, argument2);
+	}
+	
 	public static Call createCall(Expression method, Expression argument1, String argument2) {
 		return createCall(method, argument1, new DottedExpression(argument2));
+	}
+	
+	public static Expression createIdent(String ident) {
+		return new DottedExpression(ident);
 	}
 	
 	public static Select createSelect(Expression expression, String selector) {
