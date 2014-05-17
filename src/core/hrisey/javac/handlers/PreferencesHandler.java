@@ -32,12 +32,12 @@ import static hrisey.javac.lang.Primitive.*;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
 import hrisey.Preferences;
+import hrisey.javac.handlers.util.FieldFinder;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Call;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
-import lombok.javac.handlers.HandleConstructor;
 
 import org.mangosdk.spi.ProviderFor;
 
@@ -59,8 +59,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 			return;
 		}
 		addPrefsConstructor(classNode);
-		for (JavacNode fieldNode : HandleConstructor.findAllFields(classNode)) {
-			FieldInfo fieldInfo = new FieldInfo(fieldNode);
+		for (FieldInfo fieldInfo : FieldFinder.findAllFields(classNode)) {
 			addGetMethod(classNode, fieldInfo);
 			addSetMethod(classNode, fieldInfo);
 			addContainsMethod(classNode, fieldInfo);
@@ -83,8 +82,15 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	}
 	
 	private static String getSuffixForField(FieldInfo fieldInfo) {
-		if (fieldInfo.getType().tag == TypeTags.INT) {
+		int tag = fieldInfo.getType().tag;
+		if (tag == TypeTags.BOOLEAN) {
+			return "Boolean";
+		} else if (tag == TypeTags.FLOAT) {
+			return "Float";
+		} else if (tag == TypeTags.INT) {
 			return "Int";
+		} else if (tag == TypeTags.LONG) {
+			return "Long";
 		} else {
 			return "String";
 		}
