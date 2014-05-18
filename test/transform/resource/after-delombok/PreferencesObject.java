@@ -1,8 +1,8 @@
 import java.util.List;
 
 class PrefsClass {
-	private final android.content.SharedPreferences __prefs;
 	private final com.google.gson.Gson __gson;
+	private final android.content.SharedPreferences __prefs;
 	private MyObj myObj;
 	
 	@java.lang.SuppressWarnings("all")
@@ -13,7 +13,7 @@ class PrefsClass {
 	
 	@java.lang.SuppressWarnings("all")
 	public MyObj getMyObj() {
-		String myObjString = this.__prefs.getString("myObj", "DEFAULT");
+		java.lang.String myObjString = this.__prefs.getString("myObj", "DEFAULT");
 		if (myObjString == null) {
 			return null;
 		} else if (myObjString.equals("DEFAULT")) {
@@ -25,7 +25,12 @@ class PrefsClass {
 	
 	@java.lang.SuppressWarnings("all")
 	public void setMyObj(MyObj myObj) {
-		String myObjString = __gson.toJson(myObj);
+		java.lang.String myObjString;
+		if (myObj == null) {
+			myObjString = null;
+		} else {
+			myObjString = this.__gson.toJson(myObj);
+		}
 		this.__prefs.edit().putString("myObj", myObjString).apply();
 	}
 	

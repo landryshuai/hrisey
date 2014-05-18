@@ -1,4 +1,4 @@
 @hrisey.Preferences
 class PrefsClass {
-	private int myInt;
+	private String myString;
 }

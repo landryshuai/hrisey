@@ -92,12 +92,12 @@ class PrefsClass {
 	}
 	
 	@java.lang.SuppressWarnings("all")
-	public String getMyString() {
+	public java.lang.String getMyString() {
 		return this.__prefs.getString("myString", this.myString);
 	}
 	
 	@java.lang.SuppressWarnings("all")
-	public void setMyString(String myString) {
+	public void setMyString(java.lang.String myString) {
 		this.__prefs.edit().putString("myString", myString).apply();
 	}
 	
