@@ -1,6 +1,9 @@
 Hrisey Changelog
 ----------------
 
+### v0.2.0 "Prefsbelt Prime"
+* FEATURE: Support for complex SharedPreferences with @Preferences annotation
+
 ### v0.1.2 "Parcellus Minor"
 * BUGFIX: java.lang.NoSuchMethodError: java.lang.Object.size when parceling complex Map type such as Map<String, Map<String, String>>
 
