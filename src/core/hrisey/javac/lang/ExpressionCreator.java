@@ -85,6 +85,10 @@ public class ExpressionCreator {
 		return new Equals(new DottedExpression(left), right);
 	}
 	
+	public static NotEquals createNotEquals(String left, Expression right) {
+		return new NotEquals(new DottedExpression(left), right);
+	}
+	
 	public static Literal createNull() {
 		return new Literal();
 	}

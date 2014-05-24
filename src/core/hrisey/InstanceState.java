@@ -19,33 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package hrisey.javac.lang;
+package hrisey;
 
-import java.util.List;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import lombok.javac.JavacTreeMaker;
-
-import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.tree.JCTree.JCModifiers;
-
-public enum Modifier {
-	
-	PUBLIC(Flags.PUBLIC),
-	PROTECTED(Flags.PROTECTED),
-	PRIVATE(Flags.PRIVATE),
-	FINAL(Flags.FINAL);
-	
-	public static JCModifiers toJavac(JavacTreeMaker maker, List<Modifier> modifiers) {
-		long mods = 0;
-		for (Modifier modifier : modifiers) {
-			mods |= modifier.javac;
-		}
-		return maker.Modifiers(mods);
-	}
-	
-	private long javac;
-	
-	private Modifier(long javac) {
-		this.javac = javac;
-	}
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface InstanceState {
 }

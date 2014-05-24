@@ -41,7 +41,7 @@ public class If extends Statement {
 	@Override
 	public JCStatement create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		return maker.If(booleanExpression.create(node), ifTrue.create(node), ifFalse.create(node));
+		return maker.If(booleanExpression.create(node), ifTrue.create(node),
+				ifFalse != null ? ifFalse.create(node) : null);
 	}
-	
 }
