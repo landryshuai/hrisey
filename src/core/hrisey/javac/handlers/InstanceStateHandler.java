@@ -29,7 +29,13 @@ import static hrisey.javac.lang.ParameterCreator.createParam;
 import static hrisey.javac.lang.Primitive.VOID;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
+
+import java.util.List;
+
 import hrisey.InstanceState;
+import hrisey.javac.handlers.util.FieldFinder;
+import hrisey.javac.handlers.util.FieldInfo;
+import hrisey.javac.lang.Statement;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
@@ -46,27 +52,44 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 		deleteAnnotationIfNeccessary(annotationNode, InstanceState.class);
 		deleteImportFromCompilationUnit(annotationNode, InstanceState.class.getName());
 		
-		addOnCreateMethod(annotationNode.up().up());
-		addOnSaveInstanceStateMethod(annotationNode.up().up());
+		JavacNode classNode = annotationNode.up().up();
+		List<FieldInfo> fields = FieldFinder.findAnnotatedFields(classNode, annotationNode);
+		addOnCreateMethod(classNode, fields);
+		addOnSaveInstanceStateMethod(classNode, fields);
 	}
 
-	private void addOnCreateMethod(JavacNode classNode) {
+	private void addOnCreateMethod(JavacNode classNode, List<FieldInfo> fields) {
+		Statement[] assignments = new Statement[fields.size()];
+		for (int i = 0; i < fields.size(); i++) {
+			FieldInfo f = fields.get(i);
+			assignments[i] = createAssignment("this." + f.getName(), createCall("savedInstanceState.get" + functionNameForField(f), createLiteral(f.getName())));
+		}
 		createMethod(PUBLIC, VOID, "onCreate", createParam("android.os.Bundle", "savedInstanceState"),
 				createBlock(
 						createIf(createNotEquals("savedInstanceState", createNull()),
-								createBlock(createAssignment("this.myInt", createCall("savedInstanceState.getInt", createLiteral("myInt"))))
+								createBlock(assignments)
 						),
 						createExec(createCall("super.onCreate", "savedInstanceState"))
 				)
 		).inject(classNode);
 	}
 
-	private void addOnSaveInstanceStateMethod(JavacNode classNode) {
+	private void addOnSaveInstanceStateMethod(JavacNode classNode, List<FieldInfo> fields) {
+		Statement[] stores = new Statement[fields.size() + 1];
+		for (int i = 0; i < fields.size(); i++) {
+			FieldInfo f = fields.get(i);
+			stores[i] = createExec(createCall("outState.put" + functionNameForField(f), createLiteral(f.getName()), "this." + f.getName()));
+		}
+		stores[fields.size()] = createExec(createCall("super.onSaveInstanceState", "outState"));
 		createMethod(PUBLIC, VOID, "onSaveInstanceState", createParam("android.os.Bundle", "outState"),
-				createBlock(
-						createExec(createCall("outState.putInt", createLiteral("myInt"), "this.myInt")),
-						createExec(createCall("super.onSaveInstanceState", "outState"))
-				)
+				createBlock(stores)
 		).inject(classNode);
+	}
+	
+	private String functionNameForField(FieldInfo field) {
+		if ("java.lang.String".equals(field.getType().tsym.toString())) {
+			return "String";
+		}
+		return "Int";
 	}
 }
