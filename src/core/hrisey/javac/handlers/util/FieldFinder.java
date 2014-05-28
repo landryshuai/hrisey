@@ -39,20 +39,4 @@ public class FieldFinder {
 		}
 		return fields;
 	}
-	
-	public static List<FieldInfo> findAnnotatedFields(JavacNode classNode, JavacNode annotationNode) {
-		List<FieldInfo> fields = new ArrayList<FieldInfo>();
-		for (JavacNode fieldNode : classNode.down()) {
-			if (fieldNode.getKind() != Kind.FIELD) {
-				continue;
-			}
-			for (JavacNode node : fieldNode.down()) {
-				if (annotationNode.equals(node)) {
-					fields.add(new FieldInfo(fieldNode));
-					break;
-				}
-			}
-		}
-		return fields;
-	}
 }
