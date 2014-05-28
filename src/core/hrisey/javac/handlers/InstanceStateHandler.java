@@ -38,6 +38,7 @@ import lombok.javac.JavacNode;
 
 import org.mangosdk.spi.ProviderFor;
 
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
@@ -45,6 +46,18 @@ import com.sun.tools.javac.util.ListBuffer;
 
 @ProviderFor(JavacAnnotationHandler.class)
 public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> {
+	
+	private static final String[] primitivesMap = new String[TypeTags.TypeTagCount];
+	static {
+		primitivesMap[TypeTags.BOOLEAN] = "Boolean";
+		primitivesMap[TypeTags.BYTE] = "Byte";
+		primitivesMap[TypeTags.CHAR] = "Char";
+		primitivesMap[TypeTags.DOUBLE] = "Double";
+		primitivesMap[TypeTags.FLOAT] = "Float";
+		primitivesMap[TypeTags.INT] = "Int";
+		primitivesMap[TypeTags.LONG] = "Long";
+		primitivesMap[TypeTags.SHORT] = "Short";
+	}
 	
 	@Override
 	public void handle(AnnotationValues<InstanceState> annotation, JCAnnotation ast, JavacNode annotationNode) {
@@ -133,6 +146,6 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 		if ("java.lang.String".equals(field.getType().tsym.toString())) {
 			return "String";
 		}
-		return "Int";
+		return primitivesMap[field.getType().tag];
 	}
 }

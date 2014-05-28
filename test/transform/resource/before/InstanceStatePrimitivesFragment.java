@@ -1,5 +1,3 @@
-// ignore
-
 import hrisey.InstanceState;
 import android.app.Fragment;
 
