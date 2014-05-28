@@ -29,7 +29,6 @@ import static hrisey.javac.lang.ParameterCreator.createParam;
 import static hrisey.javac.lang.Primitive.VOID;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
-
 import hrisey.InstanceState;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Statement;
@@ -40,6 +39,9 @@ import lombok.javac.JavacNode;
 import org.mangosdk.spi.ProviderFor;
 
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
+import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCStatement;
+import com.sun.tools.javac.util.ListBuffer;
 
 @ProviderFor(JavacAnnotationHandler.class)
 public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> {
@@ -51,8 +53,34 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 
 		JavacNode classNode = annotationNode.up().up();
 		FieldInfo fieldInfo = new FieldInfo(annotationNode.up());
-		addOnCreateMethod(classNode, fieldInfo);
-		addOnSaveInstanceStateMethod(classNode, fieldInfo);
+		JCMethodDecl onCreate = getOnCreateMethod(classNode);
+		if (onCreate == null) {
+			addOnCreateMethod(classNode, fieldInfo);
+		} else {
+			prependAssignmentStatement(classNode, onCreate, fieldInfo);
+		}
+		JCMethodDecl onSaveInstanceState = getOnSaveInstanceStateMethod(classNode);
+		if (onSaveInstanceState == null) {
+			addOnSaveInstanceStateMethod(classNode, fieldInfo);
+		} else {
+			prependStoreStatement(classNode, onSaveInstanceState, fieldInfo);
+		}
+	}
+	
+	private JCMethodDecl getOnCreateMethod(JavacNode classNode) {
+		return getMethod("onCreate", classNode);
+	}
+	
+	private JCMethodDecl getMethod(String name, JavacNode classNode) {
+		for (JavacNode node : classNode.down()) {
+			if (node.get() instanceof JCMethodDecl) {
+				JCMethodDecl methodDecl = (JCMethodDecl) node.get();
+				if (name.equalsIgnoreCase(methodDecl.name.toString())) {
+					return methodDecl;
+				}
+			}
+		}
+		return null;
 	}
 
 	private void addOnCreateMethod(JavacNode classNode, FieldInfo f) {
@@ -66,6 +94,26 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 				)
 		).inject(classNode);
 	}
+	
+	private void prependAssignmentStatement(JavacNode classNode, JCMethodDecl onCreate, FieldInfo f) {
+		String savedInstanceState = onCreate.params.head.name.toString();
+		Statement assignment = createAssignment("this." + f.getName(), createCall(savedInstanceState + ".get" + functionNameForField(f), createLiteral(f.getName())));
+		Statement conditionalAssignment = createIf(createNotEquals(savedInstanceState, createNull()),
+				createBlock(assignment)
+		);
+		prependStatement(classNode, onCreate, conditionalAssignment);
+	}
+	
+	private void prependStatement(JavacNode classNode, JCMethodDecl method, Statement statement) {
+		ListBuffer<JCStatement> statements = new ListBuffer<JCStatement>();
+		statements.append(statement.create(classNode));
+		statements.appendList(method.body.stats);
+		method.body.stats = statements.toList();
+	}
+	
+	private JCMethodDecl getOnSaveInstanceStateMethod(JavacNode classNode) {
+		return getMethod("onSaveInstanceState", classNode);
+	}
 
 	private void addOnSaveInstanceStateMethod(JavacNode classNode, FieldInfo f) {
 		Statement store = createExec(createCall("outState.put" + functionNameForField(f), createLiteral(f.getName()), "this." + f.getName()));
@@ -73,6 +121,12 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 		createMethod(PUBLIC, VOID, "onSaveInstanceState", createParam("android.os.Bundle", "outState"),
 				createBlock(store, superCall)
 		).inject(classNode);
+	}
+	
+	private void prependStoreStatement(JavacNode classNode, JCMethodDecl onSaveInstanceState, FieldInfo f) {
+		String outState = onSaveInstanceState.params.head.name.toString();
+		Statement store = createExec(createCall(outState + ".put" + functionNameForField(f), createLiteral(f.getName()), "this." + f.getName()));
+		prependStatement(classNode, onSaveInstanceState, store);
 	}
 	
 	private String functionNameForField(FieldInfo field) {
