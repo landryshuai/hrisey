@@ -181,6 +181,21 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 				return "Bundle";
 			} else if ("java.lang.CharSequence".equals(className)) {
 				return "CharSequence";
+			} else if ("java.util.ArrayList".equals(className)) {
+				ClassType classType = (ClassType) field.getType();
+				if (classType.allparams_field != null && classType.allparams_field.size() == 1) {
+					if (classType.allparams_field.head instanceof ClassType) {
+						ClassType paramType = (ClassType) classType.allparams_field.head;
+						String paramName = paramType.tsym.toString();
+						if ("java.lang.String".equals(paramName)) {
+							return "StringArrayList";
+						} else if ("java.lang.CharSequence".equals(paramName)) {
+							return "CharSequenceArrayList";
+						} else if ("java.lang.Integer".equals(paramName)) {
+							return "IntegerArrayList";
+						}
+					}
+				}
 			} else if (implementsParcelable((ClassType) field.getType())) {
 				return "Parcelable";
 			}
