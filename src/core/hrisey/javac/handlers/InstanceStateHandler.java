@@ -193,6 +193,8 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 							return "CharSequenceArrayList";
 						} else if ("java.lang.Integer".equals(paramName)) {
 							return "IntegerArrayList";
+						} else if (implementsParcelable(paramType)) {
+							return "ParcelableArrayList";
 						}
 					}
 				}
