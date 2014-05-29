@@ -167,12 +167,16 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 			
 			return primitivesMap[elemType.tag] + "Array";
 		} else if (field.getType() instanceof ClassType) {
+			String className = field.getType().tsym.toString();
+			if ("java.lang.String".equals(className)) {
+				return "String";
+			}
+			if ("android.os.Bundle".equals(className)) {
+				return "Bundle";
+			}
 			if (implementsParcelable((ClassType) field.getType())) {
 				return "Parcelable";
 			}
-		}
-		if ("java.lang.String".equals(field.getType().tsym.toString())) {
-			return "String";
 		}
 		return primitivesMap[field.getType().tag];
 	}
