@@ -30,6 +30,7 @@ import static hrisey.javac.lang.Primitive.VOID;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
 import hrisey.InstanceState;
+import hrisey.Parcelable;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Modifier;
 import hrisey.javac.lang.Statement;
@@ -39,7 +40,9 @@ import lombok.javac.JavacNode;
 
 import org.mangosdk.spi.ProviderFor;
 
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.TypeTags;
+import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
@@ -157,9 +160,25 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 	}
 	
 	private String functionNameForField(FieldInfo field) {
+		if (field.getType() instanceof ClassType) {
+			if (implementsParcelable((ClassType) field.getType())) {
+				return "Parcelable";
+			}
+		}
 		if ("java.lang.String".equals(field.getType().tsym.toString())) {
 			return "String";
 		}
 		return primitivesMap[field.getType().tag];
+	}
+	
+	private boolean implementsParcelable(ClassType classType) {
+		if (classType.interfaces_field != null) {
+			for (Type interfaceType : classType.interfaces_field) {
+				if ("android.os.Parcelable".equals(interfaceType.tsym.toString())) {
+					return true;
+				}
+			}
+		}
+		return classType.tsym.getAnnotation(Parcelable.class) != null;
 	}
 }
