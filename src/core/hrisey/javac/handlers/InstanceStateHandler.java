@@ -31,6 +31,7 @@ import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
 import hrisey.InstanceState;
 import hrisey.javac.handlers.util.FieldInfo;
+import hrisey.javac.lang.Modifier;
 import hrisey.javac.lang.Statement;
 import lombok.core.AnnotationValues;
 import lombok.javac.JavacAnnotationHandler;
@@ -40,6 +41,7 @@ import org.mangosdk.spi.ProviderFor;
 
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
+import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCStatement;
 import com.sun.tools.javac.util.ListBuffer;
@@ -98,7 +100,7 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 
 	private void addOnCreateMethod(JavacNode classNode, FieldInfo f) {
 		Statement assignment = createAssignment("this." + f.getName(), createCall("savedInstanceState.get" + functionNameForField(f), createLiteral(f.getName())));
-		createMethod(PUBLIC, VOID, "onCreate", createParam("android.os.Bundle", "savedInstanceState"),
+		createMethod(getVisibilityForClass(classNode), VOID, "onCreate", createParam("android.os.Bundle", "savedInstanceState"),
 				createBlock(
 						createIf(createNotEquals("savedInstanceState", createNull()),
 								createBlock(assignment)
@@ -106,6 +108,18 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 						createExec(createCall("super.onCreate", "savedInstanceState"))
 				)
 		).inject(classNode);
+	}
+	
+	private Modifier getVisibilityForClass(JavacNode classNode) {
+		if (isActivity(classNode)) {
+			return PROTECTED;
+		}
+		return PUBLIC;
+	}
+	
+	private boolean isActivity(JavacNode classNode) {
+		JCClassDecl classDecl = (JCClassDecl) classNode.get();
+		return classDecl.getExtendsClause().type.tsym.toString().contains("Activity");
 	}
 	
 	private void prependAssignmentStatement(JavacNode classNode, JCMethodDecl onCreate, FieldInfo f) {
@@ -131,7 +145,7 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 	private void addOnSaveInstanceStateMethod(JavacNode classNode, FieldInfo f) {
 		Statement store = createExec(createCall("outState.put" + functionNameForField(f), createLiteral(f.getName()), "this." + f.getName()));
 		Statement superCall = createExec(createCall("super.onSaveInstanceState", "outState"));
-		createMethod(PUBLIC, VOID, "onSaveInstanceState", createParam("android.os.Bundle", "outState"),
+		createMethod(getVisibilityForClass(classNode), VOID, "onSaveInstanceState", createParam("android.os.Bundle", "outState"),
 				createBlock(store, superCall)
 		).inject(classNode);
 	}

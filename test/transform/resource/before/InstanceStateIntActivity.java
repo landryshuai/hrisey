@@ -1,5 +1,3 @@
-// ignore
-
 import android.app.Activity;
 
 public class InstanceStateIntActivity extends Activity {
