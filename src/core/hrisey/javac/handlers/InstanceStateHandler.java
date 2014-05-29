@@ -41,6 +41,7 @@ import lombok.javac.JavacNode;
 import org.mangosdk.spi.ProviderFor;
 
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Type.ArrayType;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
@@ -160,7 +161,12 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 	}
 	
 	private String functionNameForField(FieldInfo field) {
-		if (field.getType() instanceof ClassType) {
+		if (field.getType() instanceof ArrayType) {
+			ArrayType arrayType = (ArrayType) field.getType();
+			Type elemType = arrayType.elemtype;
+			
+			return primitivesMap[elemType.tag] + "Array";
+		} else if (field.getType() instanceof ClassType) {
 			if (implementsParcelable((ClassType) field.getType())) {
 				return "Parcelable";
 			}
