@@ -170,11 +170,11 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 			String className = field.getType().tsym.toString();
 			if ("java.lang.String".equals(className)) {
 				return "String";
-			}
-			if ("android.os.Bundle".equals(className)) {
+			} else if ("android.os.Bundle".equals(className)) {
 				return "Bundle";
-			}
-			if (implementsParcelable((ClassType) field.getType())) {
+			} else if ("java.lang.CharSequence".equals(className)) {
+				return "CharSequence";
+			} else if (implementsParcelable((ClassType) field.getType())) {
 				return "Parcelable";
 			}
 		}
