@@ -198,6 +198,16 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 						}
 					}
 				}
+			} else if ("android.util.SparseArray".equals(className)) {
+				ClassType classType = (ClassType) field.getType();
+				if (classType.allparams_field != null && classType.allparams_field.size() == 1) {
+					if (classType.allparams_field.head instanceof ClassType) {
+						ClassType paramType = (ClassType) classType.allparams_field.head;
+						if (implementsParcelable(paramType)) {
+							return "SparseParcelableArray";
+						}
+					}
+				}
 			} else if (implementsParcelable((ClassType) field.getType())) {
 				return "Parcelable";
 			}
