@@ -164,7 +164,14 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 		if (field.getType() instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType) field.getType();
 			Type elemType = arrayType.elemtype;
-			
+			if (elemType instanceof ClassType) {
+				String className = elemType.tsym.toString();
+				if ("java.lang.String".equals(className)) {
+					return "StringArray";
+				} else if ("java.lang.CharSequence".equals(className)) {
+					return "CharSequenceArray";
+				}
+			}
 			return primitivesMap[elemType.tag] + "Array";
 		} else if (field.getType() instanceof ClassType) {
 			String className = field.getType().tsym.toString();
