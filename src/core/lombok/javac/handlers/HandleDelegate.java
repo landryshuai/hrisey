@@ -25,6 +25,7 @@ import static lombok.core.handlers.HandlerUtil.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
 import static com.sun.tools.javac.code.Flags.*;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +43,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 import lombok.ConfigurationKeys;
-import lombok.Delegate;
+import lombok.experimental.Delegate;
 import lombok.core.AST.Kind;
 import lombok.core.AnnotationValues;
 import lombok.core.HandlerPriority;
@@ -56,6 +57,7 @@ import lombok.javac.JavacResolution.TypeNotConvertibleException;
 
 import org.mangosdk.spi.ProviderFor;
 
+import com.sun.tools.javac.code.Attribute.Compound;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
@@ -97,11 +99,14 @@ public class HandleDelegate extends JavacAnnotationHandler<Delegate> {
 			"finalize()"));
 	
 	private static final String LEGALITY_OF_DELEGATE = "@Delegate is legal only on instance fields or no-argument instance methods.";
+	private static final String RECURSION_NOT_ALLOWED = "@Delegate does not support recursion (delegating to a type that itself has @Delegate members). Member \"%s\" is @Delegate in type \"%s\"";
+
 	
 	@Override public void handle(AnnotationValues<Delegate> annotation, JCAnnotation ast, JavacNode annotationNode) {
-		handleFlagUsage(annotationNode, ConfigurationKeys.DELEGATE_FLAG_USAGE, "@Delegate");
+		handleExperimentalFlagUsage(annotationNode, ConfigurationKeys.DELEGATE_FLAG_USAGE, "@Delegate");
 		
-		deleteAnnotationIfNeccessary(annotationNode, Delegate.class);
+		@SuppressWarnings("deprecation") Class<? extends Annotation> oldDelegate = lombok.Delegate.class;
+		deleteAnnotationIfNeccessary(annotationNode, Delegate.class, oldDelegate);
 		
 		Type delegateType;
 		Name delegateName = annotationNode.toName(annotationNode.up().getName());
@@ -175,31 +180,36 @@ public class HandleDelegate extends JavacAnnotationHandler<Delegate> {
 			}
 		}
 		 */
-		for (Type t : toExclude) {
-			if (t instanceof ClassType) {
-				ClassType ct = (ClassType) t;
-				addMethodBindings(signaturesToExclude, ct, annotationNode.getTypesUtil(), banList);
-			} else {
-				annotationNode.addError("@Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.");
-				return;
+		
+		try {
+			for (Type t : toExclude) {
+				if (t instanceof ClassType) {
+					ClassType ct = (ClassType) t;
+					addMethodBindings(signaturesToExclude, ct, annotationNode.getTypesUtil(), banList);
+				} else {
+					annotationNode.addError("@Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.");
+					return;
+				}
 			}
-		}
-		
-		for (MethodSig sig : signaturesToExclude) {
-			banList.add(printSig(sig.type, sig.name, annotationNode.getTypesUtil()));
-		}
-		
-		for (Type t : toDelegate) {
-			if (t instanceof ClassType) {
-				ClassType ct = (ClassType) t;
-				addMethodBindings(signaturesToDelegate, ct, annotationNode.getTypesUtil(), banList);
-			} else {
-				annotationNode.addError("@Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.");
-				return;
+			
+			for (MethodSig sig : signaturesToExclude) {
+				banList.add(printSig(sig.type, sig.name, annotationNode.getTypesUtil()));
 			}
+			
+			for (Type t : toDelegate) {
+				if (t instanceof ClassType) {
+					ClassType ct = (ClassType) t;
+					addMethodBindings(signaturesToDelegate, ct, annotationNode.getTypesUtil(), banList);
+				} else {
+					annotationNode.addError("@Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.");
+					return;
+				}
+			}
+			
+			for (MethodSig sig : signaturesToDelegate) generateAndAdd(sig, annotationNode, delegateName, delegateReceiver);
+		} catch (DelegateRecursion e) {
+			annotationNode.addError(String.format(RECURSION_NOT_ALLOWED, e.member, e.type));
 		}
-		
-		for (MethodSig sig : signaturesToDelegate) generateAndAdd(sig, annotationNode, delegateName, delegateReceiver);
 	}
 	
 	public void generateAndAdd(MethodSig sig, JavacNode annotation, Name delegateName, DelegateReceiver delegateReceiver) {
@@ -336,11 +346,30 @@ public class HandleDelegate extends JavacAnnotationHandler<Delegate> {
 		return collection == null ? com.sun.tools.javac.util.List.<T>nil() : collection.toList();
 	}
 	
-	public void addMethodBindings(List<MethodSig> signatures, ClassType ct, JavacTypes types, Set<String> banList) {
+	private static class DelegateRecursion extends Throwable {
+		final String type, member;
+		
+		public DelegateRecursion(String type, String member) {
+			this.type = type;
+			this.member = member;
+		}
+	}
+	
+	public void addMethodBindings(List<MethodSig> signatures, ClassType ct, JavacTypes types, Set<String> banList) throws DelegateRecursion {
 		TypeSymbol tsym = ct.asElement();
 		if (tsym == null) return;
 		
 		for (Symbol member : tsym.getEnclosedElements()) {
+			for (Compound am : member.getAnnotationMirrors()) {
+				String name = null;
+				try {
+					name = am.type.tsym.flatName().toString();
+				} catch (Exception ignore) {}
+				
+				if ("lombok.Delegate".equals(name) || "lombok.experimental.Delegate".equals(name)) {
+					throw new DelegateRecursion(ct.tsym.name.toString(), member.name.toString());
+				}
+			}
 			if (member.getKind() != ElementKind.METHOD) continue;
 			if (member.isStatic()) continue;
 			if (member.isConstructor()) continue;

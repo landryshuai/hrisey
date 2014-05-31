@@ -23,8 +23,9 @@ package lombok;
 
 import java.util.List;
 
-import lombok.core.FlagUsageType;
 import lombok.core.configuration.ConfigurationKey;
+import lombok.core.configuration.FlagUsageType;
+import lombok.core.configuration.NullCheckExceptionType;
 
 /**
  * A container class containing all lombok configuration keys that do not belong to a specific annotation.
@@ -103,6 +104,13 @@ public class ConfigurationKeys {
 	 */
 	public static final ConfigurationKey<FlagUsageType> GETTER_FLAG_USAGE = new ConfigurationKey<FlagUsageType>("lombok.getter.flagUsage", "Emit a warning or error if @Getter is used.") {};
 	
+	/**
+	 * lombok configuration: {@code lombok.getter.lazy.flagUsage} = {@code WARNING} | {@code ERROR}.
+	 * 
+	 * If set, <em>any</em> usage of {@code @Getter(lazy=true)} results in a warning / error.
+	 */
+	public static final ConfigurationKey<FlagUsageType> GETTER_LAZY_FLAG_USAGE = new ConfigurationKey<FlagUsageType>("lombok.getter.lazy.flagUsage", "Emit a warning or error if @Getter(lazy=true) is used.") {};
+	
 	// ----- Setter -----
 	
 	/**
@@ -113,6 +121,13 @@ public class ConfigurationKeys {
 	public static final ConfigurationKey<FlagUsageType> SETTER_FLAG_USAGE = new ConfigurationKey<FlagUsageType>("lombok.setter.flagUsage", "Emit a warning or error if @Setter is used.") {};
 	
 	// ----- EqualsAndHashCode -----
+	
+	/**
+	 * lombok configuration: {@code lombok.equalsAndHashCode.doNotUseGetters} = {@code true} | {@code false}.
+	 * 
+	 * For any class without an {@code @EqualsAndHashCode} that explicitly defines the {@code doNotUseGetters} option, this value is used.
+	 */
+	public static final ConfigurationKey<Boolean> EQUALS_AND_HASH_CODE_DO_NOT_USE_GETTERS = new ConfigurationKey<Boolean>("lombok.equalsAndHashCode.doNotUseGetters", "Don't call the getters but use the fields directly in the generated equalsAndHashCode method.") {};
 	
 	/**
 	 * lombok configuration: {@code lombok.equalsAndHashCode.flagUsage} = {@code WARNING} | {@code ERROR}.
@@ -165,6 +180,13 @@ public class ConfigurationKeys {
 	public static final ConfigurationKey<FlagUsageType> DELEGATE_FLAG_USAGE = new ConfigurationKey<FlagUsageType>("lombok.delegate.flagUsage", "Emit a warning or error if @Delegate is used.") {};
 	
 	// ----- NonNull -----
+	
+	/**
+	 * lombok configuration: {@code lombok.nonNull.exceptionType} = &lt;String: <em>a java exception type; either [{@code IllegalArgumentException} or: {@code NullPointerException}].
+	 * 
+	 * Sets the exception to throw if {@code @NonNull} is applied to a method parameter, and a caller passes in {@code null}.
+	 */
+	public static final ConfigurationKey<NullCheckExceptionType> NON_NULL_EXCEPTION_TYPE = new ConfigurationKey<NullCheckExceptionType>("lombok.nonNull.exceptionType", "The type of the exception to throw if a passed-in argument is null. Default: NullPointerException.") {};
 	
 	/**
 	 * lombok configuration: {@code lombok.nonNull.flagUsage} = {@code WARNING} | {@code ERROR}.
@@ -255,7 +277,7 @@ public class ConfigurationKeys {
 	public static final ConfigurationKey<FlagUsageType> LOG_XSLF4J_FLAG_USAGE = new ConfigurationKey<FlagUsageType>("lombok.log.xslf4j.flagUsage", "Emit a warning or error if @XSlf4j is used.") {};
 	
 	/**
-	 * lombok configuration: {@code lombok.log.fieldName} = "aJavaIdentifier".
+	 * lombok configuration: {@code lombok.log.fieldName} = &lt;String: aJavaIdentifier&gt; (Default: {@code log}).
 	 * 
 	 * If set the various log annotations (which make a log field) will use the stated identifier instead of {@code log} as a name.
 	 */

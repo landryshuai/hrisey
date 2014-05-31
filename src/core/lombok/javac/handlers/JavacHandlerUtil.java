@@ -43,6 +43,7 @@ import lombok.core.AnnotationValues;
 import lombok.core.AnnotationValues.AnnotationValue;
 import lombok.core.ReferenceFieldAugment;
 import lombok.core.TypeResolver;
+import lombok.core.configuration.NullCheckExceptionType;
 import lombok.core.handlers.HandlerUtil;
 import lombok.delombok.LombokOptionsFactory;
 import lombok.experimental.Accessors;
@@ -898,6 +899,17 @@ public class JavacHandlerUtil {
 		return flags;
 	}
 	
+	public static JCExpression genTypeRef(JavacNode node, String complexName) {
+		String[] parts = complexName.split("\\.");
+		if (parts.length > 2 && parts[0].equals("java") && parts[1].equals("lang")) {
+			String[] subParts = new String[parts.length - 2];
+			System.arraycopy(parts, 2, subParts, 0, subParts.length);
+			return genJavaLangTypeRef(node, subParts);
+		}
+		
+		return chainDots(node, parts);
+	}
+	
 	public static JCExpression genJavaLangTypeRef(JavacNode node, String... simpleNames) {
 		if (LombokOptionsFactory.getDelombokOptions(node.getContext()).getFormatPreferences().javaLangAsFqn()) {
 			return chainDots(node, "java", "lang", simpleNames);
@@ -1029,15 +1041,20 @@ public class JavacHandlerUtil {
 	}
 	
 	/**
-	 * Generates a new statement that checks if the given variable is null, and if so, throws a {@code NullPointerException} with the
+	 * Generates a new statement that checks if the given variable is null, and if so, throws a specified exception with the
 	 * variable name as message.
+	 * 
+	 * @param exName The name of the exception to throw; normally {@code java.lang.NullPointerException}.
 	 */
-	public static JCStatement generateNullCheck(JavacTreeMaker maker, JavacNode variable) {
+	public static JCStatement generateNullCheck(JavacTreeMaker maker, JavacNode variable, JavacNode source) {
+		NullCheckExceptionType exceptionType = source.getAst().readConfiguration(ConfigurationKeys.NON_NULL_EXCEPTION_TYPE);
+		if (exceptionType == null) exceptionType = NullCheckExceptionType.NULL_POINTER_EXCEPTION;
+		
 		JCVariableDecl varDecl = (JCVariableDecl) variable.get();
 		if (isPrimitive(varDecl.vartype)) return null;
 		Name fieldName = varDecl.name;
-		JCExpression npe = genJavaLangTypeRef(variable, "NullPointerException");
-		JCExpression exception = maker.NewClass(null, List.<JCExpression>nil(), npe, List.<JCExpression>of(maker.Literal(fieldName.toString())), null);
+		JCExpression exType = genTypeRef(variable, exceptionType.getExceptionType());
+		JCExpression exception = maker.NewClass(null, List.<JCExpression>nil(), exType, List.<JCExpression>of(maker.Literal(exceptionType.toExceptionMessage(fieldName.toString()))), null);
 		JCStatement throwStatement = maker.Throw(exception);
 		JCBlock throwBlock = maker.Block(0, List.of(throwStatement));
 		return maker.If(maker.Binary(CTC_EQUAL, maker.Ident(fieldName), maker.Literal(CTC_BOT, null)), throwBlock, null);
