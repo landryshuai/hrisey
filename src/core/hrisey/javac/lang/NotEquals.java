@@ -21,31 +21,25 @@
  */
 package hrisey.javac.lang;
 
-import java.util.List;
-
+import lombok.javac.Javac;
+import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
-import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.tree.JCTree.JCModifiers;
+import com.sun.tools.javac.tree.JCTree.JCExpression;
 
-public enum Modifier {
+public class NotEquals extends Expression {
 	
-	PUBLIC(Flags.PUBLIC),
-	PROTECTED(Flags.PROTECTED),
-	PRIVATE(Flags.PRIVATE),
-	FINAL(Flags.FINAL);
-	
-	public static JCModifiers toJavac(JavacTreeMaker maker, List<Modifier> modifiers) {
-		long mods = 0;
-		for (Modifier modifier : modifiers) {
-			mods |= modifier.javac;
-		}
-		return maker.Modifiers(mods);
+	private Expression left;
+	private Expression right;
+
+	public NotEquals(Expression left, Expression right) {
+		this.left = left;
+		this.right = right;
 	}
-	
-	private long javac;
-	
-	private Modifier(long javac) {
-		this.javac = javac;
+
+	@Override
+	public JCExpression create(JavacNode node) {
+		JavacTreeMaker maker = node.getTreeMaker();
+		return maker.Binary(Javac.CTC_NOT_EQUAL, left.create(node), right.create(node));
 	}
 }

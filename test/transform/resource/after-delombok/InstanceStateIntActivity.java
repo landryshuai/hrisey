@@ -1,12 +1,11 @@
 import android.app.Activity;
-import android.os.Bundle;
 
 public class InstanceStateIntActivity extends Activity {
 	
 	private int myInt;
 	
 	@java.lang.SuppressWarnings("all")
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(android.os.Bundle savedInstanceState) {
 		if (savedInstanceState != null) {
 			this.myInt = savedInstanceState.getInt("myInt");
 		}
@@ -14,7 +13,7 @@ public class InstanceStateIntActivity extends Activity {
 	}
 	
 	@java.lang.SuppressWarnings("all")
-	protected void onSaveInstanceState(Bundle outState) {
+	protected void onSaveInstanceState(android.os.Bundle outState) {
 		outState.putInt("myInt", this.myInt);
 		super.onSaveInstanceState(outState);
 	}

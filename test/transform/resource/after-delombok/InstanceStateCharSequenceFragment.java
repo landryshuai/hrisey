@@ -1,20 +1,21 @@
 import android.app.Fragment;
+import android.os.Bundle;
 
-public class InstanceStateIntFragment extends Fragment {
+public class InstanceStateCharSequenceFragment extends Fragment {
 	
-	private int myInt;
+	private CharSequence mySeq;
 	
 	@java.lang.SuppressWarnings("all")
 	public void onCreate(android.os.Bundle savedInstanceState) {
 		if (savedInstanceState != null) {
-			this.myInt = savedInstanceState.getInt("myInt");
+			this.mySeq = savedInstanceState.getCharSequence("mySeq");
 		}
 		super.onCreate(savedInstanceState);
 	}
 	
 	@java.lang.SuppressWarnings("all")
 	public void onSaveInstanceState(android.os.Bundle outState) {
-		outState.putInt("myInt", this.myInt);
+		outState.putCharSequence("mySeq", this.mySeq);
 		super.onSaveInstanceState(outState);
 	}
 }
