@@ -1,6 +1,9 @@
 Hrisey Changelog
 ----------------
 
+### v0.3.0 "Indu San"
+* FEATURE: Support for saving and restoring Activity / Fragment state with @InstanceState annotation
+
 ### v0.2.0 "Prefsbelt Prime"
 * FEATURE: Support for complex SharedPreferences with @Preferences annotation
 
