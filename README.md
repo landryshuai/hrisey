@@ -10,7 +10,7 @@ Add Hrisey as a dependency:
 
 ```Groovy
 dependencies {
-    provided 'pl.mg6.hrisey:hrisey:0.2.+'
+    provided 'pl.mg6.hrisey:hrisey:0.3.+'
 }
 ```
 
