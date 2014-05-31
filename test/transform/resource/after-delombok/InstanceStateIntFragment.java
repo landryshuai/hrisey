@@ -1,12 +1,11 @@
 import android.app.Fragment;
-import android.os.Bundle;
 
 public class InstanceStateIntFragment extends Fragment {
 	
 	private int myInt;
 	
 	@java.lang.SuppressWarnings("all")
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(android.os.Bundle savedInstanceState) {
 		if (savedInstanceState != null) {
 			this.myInt = savedInstanceState.getInt("myInt");
 		}
@@ -14,7 +13,7 @@ public class InstanceStateIntFragment extends Fragment {
 	}
 	
 	@java.lang.SuppressWarnings("all")
-	public void onSaveInstanceState(Bundle outState) {
+	public void onSaveInstanceState(android.os.Bundle outState) {
 		outState.putInt("myInt", this.myInt);
 		super.onSaveInstanceState(outState);
 	}

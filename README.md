@@ -1,4 +1,4 @@
-Hrisey [![Build Status](https://travis-ci.org/mg6maciej/hrisey.svg?branch=master)](https://travis-ci.org/mg6maciej/hrisey)
+Hrisey [![Build Status](https://travis-ci.org/mg6maciej/hrisey.svg?branch=develop)](https://travis-ci.org/mg6maciej/hrisey)
 ======
 
 Boilerplate code suppressor tool for Android platform based on [Project Lombok](http://projectlombok.org/).
@@ -10,7 +10,7 @@ Add Hrisey as a dependency:
 
 ```Groovy
 dependencies {
-    provided 'pl.mg6.hrisey:hrisey:0.2.+'
+    provided 'pl.mg6.hrisey:hrisey:0.3.+'
 }
 ```
 

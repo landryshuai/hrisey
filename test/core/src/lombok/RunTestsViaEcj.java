@@ -85,6 +85,7 @@ public class RunTestsViaEcj extends AbstractRunTests {
 				return false;
 			}
 			
+			@SuppressWarnings("all") // Added to the interface in later ecj version.
 			public boolean ignoreAllErrors() {
 				return false;
 			}

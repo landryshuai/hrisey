@@ -41,10 +41,10 @@ import lombok.ToString;
 import lombok.Value;
 import lombok.core.AST;
 import lombok.core.AnnotationValues;
-import lombok.core.FlagUsageType;
 import lombok.core.JavaIdentifiers;
 import lombok.core.LombokNode;
 import lombok.core.configuration.ConfigurationKey;
+import lombok.core.configuration.FlagUsageType;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.Wither;
@@ -203,6 +203,8 @@ public class HandlerUtil {
 	
 	/** Matches the simple part of any annotation that lombok considers as indicative of Nullable status. */
 	public static final Pattern NULLABLE_PATTERN = Pattern.compile("^(?:nullable|checkfornull)$", Pattern.CASE_INSENSITIVE);
+	
+	public static final String DEFAULT_EXCEPTION_FOR_NON_NULL = "java.lang.NullPointerException";
 	
 	/**
 	 * Generates a getter name from a given field name.

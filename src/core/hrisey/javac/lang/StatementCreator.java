@@ -50,4 +50,8 @@ public class StatementCreator {
 	public static If createIf(Expression booleanExpression, Statement ifTrue, Statement ifFalse) {
 		return new If(booleanExpression, ifTrue, ifFalse);
 	}
+	
+	public static If createIf(Expression booleanExpression, Statement ifTrue) {
+		return new If(booleanExpression, ifTrue, null);
+	}
 }

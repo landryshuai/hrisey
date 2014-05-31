@@ -31,6 +31,7 @@ import com.sun.tools.javac.tree.JCTree.JCModifiers;
 public enum Modifier {
 	
 	PUBLIC(Flags.PUBLIC),
+	PROTECTED(Flags.PROTECTED),
 	PRIVATE(Flags.PRIVATE),
 	FINAL(Flags.FINAL);
 	
