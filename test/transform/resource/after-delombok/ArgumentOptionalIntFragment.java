@@ -38,6 +38,7 @@ public class ArgumentOptionalIntFragment extends Fragment {
 			ArgumentOptionalIntFragment fragment = new ArgumentOptionalIntFragment();
 			android.os.Bundle args = new android.os.Bundle();
 			args.putInt("myInt", this.myInt);
+			fragment.setArguments(args);
 			return fragment;
 		}
 	}

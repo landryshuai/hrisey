@@ -43,6 +43,7 @@ public class ArgumentIntFragment extends Fragment {
 			ArgumentIntFragment fragment = new ArgumentIntFragment();
 			android.os.Bundle args = new android.os.Bundle();
 			args.putInt("myInt", this.myInt);
+			fragment.setArguments(args);
 			return fragment;
 		}
 	}
