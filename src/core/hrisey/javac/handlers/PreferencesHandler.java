@@ -203,7 +203,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		Statement happyPathBlock;
 		if (isGenericType(fieldInfo)) {
 			String typeVar = fieldInfo.getName() + "Type";
-			NewInstance instance = createNewInstance(createType("com.google.gson.reflect.TypeToken", fieldInfo.getType()));
+			NewInstance instance = createNewAnonymousClassInstance(createType("com.google.gson.reflect.TypeToken", fieldInfo.getType()));
 			happyPathBlock = createBlock(
 					createVariable("java.lang.reflect.Type", typeVar, createCall(createSelect(instance, "getType"))),
 					createReturn(createCall("this.__gson.fromJson", localVar, typeVar))
@@ -231,7 +231,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		Statement happyPathBlock;
 		if (isGenericType(fieldInfo)) {
 			String typeVar = fieldInfo.getName() + "Type";
-			NewInstance instance = createNewInstance(createType("com.google.gson.reflect.TypeToken", fieldInfo.getType()));
+			NewInstance instance = createNewAnonymousClassInstance(createType("com.google.gson.reflect.TypeToken", fieldInfo.getType()));
 			happyPathBlock = createBlock(
 					createVariable("java.lang.reflect.Type", typeVar, createCall(createSelect(instance, "getType"))),
 					createAssignment(localVar, createCall("this.__gson.toJson", fieldInfo.getName(), typeVar))

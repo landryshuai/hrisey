@@ -33,18 +33,18 @@ import lombok.javac.JavacTreeMaker;
 public class Field {
 	
 	private final List<Modifier> modifiers;
-	private final String typeName;
+	private final TypeExpression type;
 	private final String varName;
 	
-	Field(List<Modifier> modifiers, String typeName, String varName) {
+	Field(List<Modifier> modifiers, TypeExpression type, String varName) {
 		this.modifiers = modifiers;
-		this.typeName = typeName;
+		this.type = type;
 		this.varName = varName;
 	}
 
 	public void inject(JavacNode classNode) {
 		JavacTreeMaker maker = classNode.getTreeMaker();
-		JCVariableDecl field = maker.VarDef(Modifier.toJavac(maker, modifiers), classNode.toName(varName), chainDotsString(classNode, typeName), null);
+		JCVariableDecl field = maker.VarDef(Modifier.toJavac(maker, modifiers), classNode.toName(varName), type.create(classNode), null);
 		injectField(classNode, field);
 	}
 }

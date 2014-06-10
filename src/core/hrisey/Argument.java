@@ -19,42 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package hrisey.javac.lang;
+package hrisey;
 
-import static hrisey.javac.lang.EmptyList.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.List;
-
-import lombok.javac.JavacNode;
-import lombok.javac.JavacTreeMaker;
-
-import com.sun.tools.javac.tree.JCTree.JCClassDecl;
-import com.sun.tools.javac.tree.JCTree.JCExpression;
-import com.sun.tools.javac.util.ListBuffer;
-
-public class NewInstance extends Expression {
-	
-	private TypeExpression type;
-	private List<Expression> arguments;
-	private boolean anonymous;
-
-	public NewInstance(TypeExpression type, List<Expression> arguments, boolean anonymous) {
-		this.type = type;
-		this.arguments = arguments;
-		this.anonymous = anonymous;
-	}
-
-	@Override
-	public JCExpression create(JavacNode node) {
-		JavacTreeMaker maker = node.getTreeMaker();
-		ListBuffer<JCExpression> list = new ListBuffer<JCExpression>();
-		for (Expression argument : arguments) {
-			list.add(argument.create(node));
-		}
-		JCClassDecl classDecl = null;
-		if (anonymous) {
-			classDecl = maker.AnonymousClassDef(maker.Modifiers(0), emptyTrees());
-		}
-		return maker.NewClass(null, emptyExpressions(), type.create(node), list.toList(), classDecl);
-	}
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface Argument {
 }

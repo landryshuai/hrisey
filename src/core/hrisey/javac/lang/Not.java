@@ -21,40 +21,23 @@
  */
 package hrisey.javac.lang;
 
-import static hrisey.javac.lang.EmptyList.*;
-
-import java.util.List;
-
+import lombok.javac.Javac;
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
-import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
-import com.sun.tools.javac.util.ListBuffer;
 
-public class NewInstance extends Expression {
+public class Not extends Expression {
 	
-	private TypeExpression type;
-	private List<Expression> arguments;
-	private boolean anonymous;
-
-	public NewInstance(TypeExpression type, List<Expression> arguments, boolean anonymous) {
-		this.type = type;
-		this.arguments = arguments;
-		this.anonymous = anonymous;
+	private Expression expression;
+	
+	public Not(Expression booleanExpression) {
+		this.expression = booleanExpression;
 	}
 
 	@Override
 	public JCExpression create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		ListBuffer<JCExpression> list = new ListBuffer<JCExpression>();
-		for (Expression argument : arguments) {
-			list.add(argument.create(node));
-		}
-		JCClassDecl classDecl = null;
-		if (anonymous) {
-			classDecl = maker.AnonymousClassDef(maker.Modifiers(0), emptyTrees());
-		}
-		return maker.NewClass(null, emptyExpressions(), type.create(node), list.toList(), classDecl);
+		return maker.Unary(Javac.CTC_NOT, expression.create(node));
 	}
 }

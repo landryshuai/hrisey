@@ -21,6 +21,7 @@
  */
 package hrisey.javac.lang;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 public class MethodCreator {
@@ -31,5 +32,17 @@ public class MethodCreator {
 
 	public static Method createMethod(Modifier modifier, TypeExpression returnType, String name, Parameter parameter, Block body) {
 		return new Method(Collections.singletonList(modifier), returnType, name, Collections.singletonList(parameter), body);
+	}
+
+	public static Method createMethod(Modifier modifier1, Modifier modifier2, String returnType, String name, Block body) {
+		return new Method(Arrays.asList(modifier1, modifier2), new DottedExpression(returnType), name, Collections.<Parameter>emptyList(), body);
+	}
+
+	public static Method createMethod(Modifier modifier, String returnType, String name, Parameter parameter, Block body) {
+		return new Method(Collections.singletonList(modifier), new DottedExpression(returnType), name, Collections.singletonList(parameter), body);
+	}
+
+	public static Method createMethod(Modifier modifier, String returnType, String name, Block body) {
+		return new Method(Collections.singletonList(modifier), new DottedExpression(returnType), name, Collections.<Parameter>emptyList(), body);
 	}
 }

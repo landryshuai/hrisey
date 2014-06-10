@@ -86,11 +86,11 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 		}
 	}
 	
-	private JCMethodDecl getOnCreateMethod(JavacNode classNode) {
+	public static JCMethodDecl getOnCreateMethod(JavacNode classNode) {
 		return getMethod("onCreate", classNode);
 	}
 	
-	private JCMethodDecl getMethod(String name, JavacNode classNode) {
+	private static JCMethodDecl getMethod(String name, JavacNode classNode) {
 		for (JavacNode node : classNode.down()) {
 			if (node.get() instanceof JCMethodDecl) {
 				JCMethodDecl methodDecl = (JCMethodDecl) node.get();

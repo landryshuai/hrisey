@@ -22,6 +22,7 @@
 package hrisey.javac.lang;
 
 import static hrisey.javac.lang.EmptyList.*;
+import static lombok.javac.handlers.JavacHandlerUtil.injectType;
 
 import java.util.List;
 
@@ -29,32 +30,26 @@ import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
-import com.sun.tools.javac.tree.JCTree.JCExpression;
-import com.sun.tools.javac.util.ListBuffer;
 
-public class NewInstance extends Expression {
+public class Classs {
 	
-	private TypeExpression type;
-	private List<Expression> arguments;
-	private boolean anonymous;
-
-	public NewInstance(TypeExpression type, List<Expression> arguments, boolean anonymous) {
-		this.type = type;
-		this.arguments = arguments;
-		this.anonymous = anonymous;
+	private final List<Modifier> modifiers;
+	private final String name;
+	
+	public Classs(List<Modifier> modifiers, String name) {
+		this.modifiers = modifiers;
+		this.name = name;
 	}
-
-	@Override
-	public JCExpression create(JavacNode node) {
-		JavacTreeMaker maker = node.getTreeMaker();
-		ListBuffer<JCExpression> list = new ListBuffer<JCExpression>();
-		for (Expression argument : arguments) {
-			list.add(argument.create(node));
-		}
-		JCClassDecl classDecl = null;
-		if (anonymous) {
-			classDecl = maker.AnonymousClassDef(maker.Modifiers(0), emptyTrees());
-		}
-		return maker.NewClass(null, emptyExpressions(), type.create(node), list.toList(), classDecl);
+	
+	public JavacNode inject(JavacNode parentClass) {
+		JavacTreeMaker maker = parentClass.getTreeMaker();
+		JCClassDecl classDecl = maker.ClassDef(
+				Modifier.toJavac(maker, modifiers),
+				parentClass.toName(name),
+				emptyTypeParameters(),
+				null,
+				emptyExpressions(),
+				emptyTrees());
+		return injectType(parentClass, classDecl);
 	}
 }

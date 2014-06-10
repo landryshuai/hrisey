@@ -35,6 +35,10 @@ public class StatementCreator {
 		return new Return(expression);
 	}
 	
+	public static Return createReturn(String expression) {
+		return new Return(new DottedExpression(expression));
+	}
+	
 	public static Execution createExec(Expression expression) {
 		return new Execution(expression);
 	}
@@ -53,5 +57,9 @@ public class StatementCreator {
 	
 	public static If createIf(Expression booleanExpression, Statement ifTrue) {
 		return new If(booleanExpression, ifTrue, null);
+	}
+	
+	public static Throw createThrow(Expression expression) {
+		return new Throw(expression);
 	}
 }

@@ -33,4 +33,8 @@ public class ConstructorCreator {
 	public static Method createConstructor(Modifier modifier, Parameter parameter1, Parameter parameter2, Block body) {
 		return new Method(Collections.singletonList(modifier), Arrays.asList(parameter1, parameter2), body);
 	}
+	
+	public static Method createConstructor(Block body) {
+		return new Method(Collections.<Modifier>emptyList(), Collections.<Parameter>emptyList(), body);
+	}
 }

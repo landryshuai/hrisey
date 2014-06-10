@@ -1,12 +1,11 @@
 import android.app.Fragment;
-import android.os.Bundle;
 
 public class ArgumentIntFragment extends Fragment {
 	
 	private int myInt;
 	
 	@java.lang.SuppressWarnings("all")
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(android.os.Bundle savedInstanceState) {
 		{
 			android.os.Bundle args = getArguments();
 			this.myInt = args.getInt("myInt");
@@ -19,10 +18,11 @@ public class ArgumentIntFragment extends Fragment {
 		return new Builder();
 	}
 	
+	@java.lang.SuppressWarnings("all")
 	public static final class Builder {
 		
-		private int myInt;
 		private boolean myIntCalled;
+		private int myInt;
 		
 		@java.lang.SuppressWarnings("all")
 		Builder() {
@@ -37,7 +37,7 @@ public class ArgumentIntFragment extends Fragment {
 		
 		@java.lang.SuppressWarnings("all")
 		public ArgumentIntFragment build() {
-			if (!myIntCalled) {
+			if (!this.myIntCalled) {
 				throw new java.lang.IllegalStateException("myInt is required");
 			}
 			ArgumentIntFragment fragment = new ArgumentIntFragment();

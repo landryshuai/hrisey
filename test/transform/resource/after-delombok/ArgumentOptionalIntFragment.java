@@ -1,12 +1,11 @@
 import android.app.Fragment;
-import android.os.Bundle;
 
 public class ArgumentOptionalIntFragment extends Fragment {
 	
 	private int myInt;
 	
 	@java.lang.SuppressWarnings("all")
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(android.os.Bundle savedInstanceState) {
 		{
 			android.os.Bundle args = getArguments();
 			this.myInt = args.getInt("myInt");

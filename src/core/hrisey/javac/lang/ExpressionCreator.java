@@ -22,11 +22,16 @@
 package hrisey.javac.lang;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 public class ExpressionCreator {
 	
 	public static Literal createLiteral(String stringValue) {
 		return new Literal(stringValue);
+	}
+	
+	public static Literal createLiteral(boolean boolValue) {
+		return new Literal(boolValue);
 	}
 	
 	public static Call createCall(Expression method, Expression... arguments) {
@@ -93,7 +98,19 @@ public class ExpressionCreator {
 		return new Literal();
 	}
 	
-	public static NewInstance createNewInstance(TypeExpression type) {
-		return new NewInstance(type, true);
+	public static NewInstance createNewAnonymousClassInstance(TypeExpression type) {
+		return new NewInstance(type, Collections.<Expression>emptyList(), true);
+	}
+	
+	public static NewInstance createNewInstance(String type) {
+		return new NewInstance(new DottedExpression(type), Collections.<Expression>emptyList(), false);
+	}
+	
+	public static NewInstance createNewInstance(String type, Expression argument) {
+		return new NewInstance(new DottedExpression(type), Collections.singletonList(argument), false);
+	}
+	
+	public static Expression createNot(String expression) {
+		return new Not(new DottedExpression(expression));
 	}
 }

@@ -21,6 +21,7 @@
  */
 package hrisey.javac.lang;
 
+import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCTypeParameter;
 import com.sun.tools.javac.util.List;
@@ -33,5 +34,9 @@ public class EmptyList {
 	
 	public static List<JCTypeParameter> emptyTypeParameters() {
 		return List.<JCTypeParameter>nil();
+	}
+	
+	public static List<JCTree> emptyTrees() {
+		return List.<JCTree>nil();
 	}
 }

@@ -39,6 +39,10 @@ public class Literal extends Expression {
 		this.value = stringValue;
 	}
 	
+	public Literal(boolean boolValue) {
+		this.value = boolValue;
+	}
+	
 	@Override
 	public JCLiteral create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();

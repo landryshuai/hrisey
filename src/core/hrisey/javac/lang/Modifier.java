@@ -33,6 +33,7 @@ public enum Modifier {
 	PUBLIC(Flags.PUBLIC),
 	PROTECTED(Flags.PROTECTED),
 	PRIVATE(Flags.PRIVATE),
+	STATIC(Flags.STATIC),
 	FINAL(Flags.FINAL);
 	
 	public static JCModifiers toJavac(JavacTreeMaker maker, List<Modifier> modifiers) {
