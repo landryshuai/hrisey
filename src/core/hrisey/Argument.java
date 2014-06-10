@@ -29,4 +29,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.SOURCE)
 public @interface Argument {
+	
+	boolean optional() default false;
 }

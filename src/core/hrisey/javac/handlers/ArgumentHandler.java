@@ -32,6 +32,10 @@ import static hrisey.javac.lang.ParameterCreator.createParam;
 import static hrisey.javac.lang.Primitive.*;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import hrisey.Argument;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.DottedExpression;
@@ -50,6 +54,9 @@ public class ArgumentHandler extends JavacAnnotationHandler<Argument> {
 	
 	@Override
 	public void handle(AnnotationValues<Argument> annotation, JCAnnotation ast, JavacNode annotationNode) {
+		
+		boolean optional = annotation.getInstance().optional();
+		
 		deleteAnnotationIfNeccessary(annotationNode, Argument.class);
 		deleteImportFromCompilationUnit(annotationNode, Argument.class.getName());
 
@@ -61,10 +68,10 @@ public class ArgumentHandler extends JavacAnnotationHandler<Argument> {
 		}
 		addBuilderStaticMethod(classNode);
 		JavacNode builderNode = addBuilderClass(classNode);
-		addFields(builderNode);
+		addFields(builderNode, optional);
 		addPrivateConstructor(builderNode);
-		addFluentSetters(builderNode);
-		addBuildMethod(builderNode);
+		addFluentSetters(builderNode, optional);
+		addBuildMethod(classNode, builderNode, optional);
 	}
 
 	private void addOnCreateMethod(JavacNode classNode, FieldInfo f) {
@@ -93,9 +100,11 @@ public class ArgumentHandler extends JavacAnnotationHandler<Argument> {
 				.inject(classNode);
 	}
 	
-	private void addFields(JavacNode builderNode) {
+	private void addFields(JavacNode builderNode, boolean optional) {
 		createField(PRIVATE, INT, "myInt").inject(builderNode);
-		createField(PRIVATE, BOOLEAN, "myIntCalled").inject(builderNode);
+		if (!optional) {
+			createField(PRIVATE, BOOLEAN, "myIntCalled").inject(builderNode);
+		}
 	}
 	
 	private void addPrivateConstructor(JavacNode builderNode) {
@@ -104,27 +113,32 @@ public class ArgumentHandler extends JavacAnnotationHandler<Argument> {
 		).inject(builderNode);
 	}
 	
-	private void addFluentSetters(JavacNode builderNode) {
+	private void addFluentSetters(JavacNode builderNode, boolean optional) {
+		List<Statement> statements = new ArrayList<Statement>();
+		statements.add(createAssignment("this.myInt", "myInt"));
+		if (!optional) {
+			statements.add(createAssignment("this.myIntCalled", createLiteral(true)));
+		}
+		statements.add(createReturn(new DottedExpression("this")));
 		createMethod(PUBLIC, "Builder", "myInt", createParam(INT, "myInt"),
-				createBlock(
-						createAssignment("this.myInt", "myInt"),
-						createAssignment("this.myIntCalled", createLiteral(true)),
-						createReturn(new DottedExpression("this"))
-				)
+				createBlock(statements)
 		).inject(builderNode);
 	}
 	
-	private void addBuildMethod(JavacNode builderNode) {
-		Statement throwStatement = createThrow(createNewInstance("java.lang.IllegalStateException", createLiteral("myInt is required")));
-		createMethod(PUBLIC, "ArgumentIntFragment", "build",
-				createBlock(
-						createIf(createNot("this.myIntCalled"), createBlock(throwStatement)),
-						createVariable("ArgumentIntFragment", "fragment", createNewInstance("ArgumentIntFragment")),
-						createVariable("android.os.Bundle", "args", createNewInstance("android.os.Bundle")),
-						createExec(createCall("args.putInt", createLiteral("myInt"), "this.myInt")),
-						createExec(createCall("fragment.setArguments", "args")),
-						createReturn("fragment")
-				)
+	private void addBuildMethod(JavacNode classNode, JavacNode builderNode, boolean optional) {
+		List<Statement> statements = new ArrayList<Statement>();
+		if (!optional) {
+			Statement throwStatement = createThrow(createNewInstance("java.lang.IllegalStateException", createLiteral("myInt is required")));
+			statements.add(createIf(createNot("this.myIntCalled"), createBlock(throwStatement)));
+		}
+		String className = classNode.getName();
+		statements.add(createVariable(className, "fragment", createNewInstance(className)));
+		statements.add(createVariable("android.os.Bundle", "args", createNewInstance("android.os.Bundle")));
+		statements.add(createExec(createCall("args.putInt", createLiteral("myInt"), "this.myInt")));
+		statements.add(createExec(createCall("fragment.setArguments", "args")));
+		statements.add(createReturn("fragment"));
+		createMethod(PUBLIC, className, "build",
+				createBlock(statements)
 		).inject(builderNode);
 	}
 }

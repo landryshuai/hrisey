@@ -18,6 +18,7 @@ public class ArgumentOptionalIntFragment extends Fragment {
 		return new Builder();
 	}
 	
+	@java.lang.SuppressWarnings("all")
 	public static final class Builder {
 		
 		private int myInt;

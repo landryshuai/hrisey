@@ -22,10 +22,15 @@
 package hrisey.javac.lang;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class BlockCreator {
 	
 	public static Block createBlock(Statement... statements) {
 		return new Block(Arrays.asList(statements));
+	}
+	
+	public static Block createBlock(List<Statement> statements) {
+		return new Block(statements);
 	}
 }

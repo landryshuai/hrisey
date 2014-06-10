@@ -1,5 +1,3 @@
-// ignore
-
 import android.app.Fragment;
 
 public class ArgumentOptionalIntFragment extends Fragment {
