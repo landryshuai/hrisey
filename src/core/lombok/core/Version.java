@@ -25,7 +25,7 @@ package lombok.core;
  * This class just holds hrisey's current version.
  */
 public class Version {
-	private static final String VERSION = "0.3.0";
+	private static final String VERSION = "0.3.1";
 	private static final String RELEASE_NAME = "Indu San";
 	
 	private Version() {
