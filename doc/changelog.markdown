@@ -1,6 +1,9 @@
 Hrisey Changelog
 ----------------
 
+### v0.3.1 "Indu San"
+* BUGFIX: fixed @Parcelable support for Double (boxed) type
+
 ### v0.3.0 "Indu San"
 * FEATURE: Support for saving and restoring Activity / Fragment state with @InstanceState annotation
 

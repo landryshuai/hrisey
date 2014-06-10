@@ -117,7 +117,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	private static final Map<String, String> boxedPrimitivesMap = new HashMap<String, String>();
 	static {
 		boxedPrimitivesMap.put("java.lang.Byte", "Byte");
-		boxedPrimitivesMap.put("java.lang.Double", "Doubl");
+		boxedPrimitivesMap.put("java.lang.Double", "Double");
 		boxedPrimitivesMap.put("java.lang.Float", "Float");
 		boxedPrimitivesMap.put("java.lang.Integer", "Int");
 		boxedPrimitivesMap.put("java.lang.Long", "Long");
