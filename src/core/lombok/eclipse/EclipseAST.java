@@ -33,6 +33,7 @@ import java.util.List;
 import lombok.Lombok;
 import lombok.core.AST;
 import lombok.core.LombokImmutableList;
+import lombok.eclipse.handlers.EclipseHandlerUtil;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
@@ -69,10 +70,51 @@ public class EclipseAST extends AST<EclipseAST, EclipseNode, ASTNode> {
 	}
 	
 	private static volatile boolean skipEclipseWorkspaceBasedFileResolver = false;
+	private static final URI NOT_CALCULATED_MARKER = URI.create("http://projectlombok.org/not/calculated");
+	private URI memoizedAbsoluteFileLocation = NOT_CALCULATED_MARKER;
+	
 	public URI getAbsoluteFileLocation() {
+		if (memoizedAbsoluteFileLocation != NOT_CALCULATED_MARKER) return memoizedAbsoluteFileLocation;
+		
+		memoizedAbsoluteFileLocation = getAbsoluteFileLocation0();
+		return memoizedAbsoluteFileLocation;
+	}
+	
+	/** This is the call, but we wrapped it to memoize this. */
+	private URI getAbsoluteFileLocation0() {
+		String fileName = getFileName();
+		if (fileName != null && (fileName.startsWith("file:") || fileName.startsWith("sourcecontrol:"))) {
+			// Some exotic build systems get real fancy with filenames. Known culprits:
+			// The 'jazz' source control system _probably_ (not confirmed yet) uses sourcecontrol://jazz: urls.
+			// GWT puts file:/D:/etc/etc/etc/Foo.java in here.
+			return URI.create(fileName);
+		}
+		
+		// state of the research in this:
+		// * We need an abstraction of a 'directory level'. This abstraction needs 'read()' which returns a string (content of lombok.config) and 'getParent()'.
+		// * sometimes, cud.compilationResult.compilationUnit is an 'openable', you can chase this down to end up with a path, you can jigger this into being the sibling 'lombok.config', and then use:
+		// 				InputStream in = ResourcesPlugin.getWorkspace().getRoot().getFile(ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(x)).getFullPath()).getContents(true);
+		// to read out this data. Our theory is that this will work even with very crazy virtual filesystems such as sourcecontrol://jazz/blabla.
+		// * With jazz and other creative file backed systems, is there even a 'project root' concept? Surely there won't be a 'workspace root' concept so how do we abstract the idea that, from jazz://whatever/projectroot, the parent is c:\myWorkspace?
+		// * Check the .getAlternateAbsolutePath() impl which has the research done so far.
+		// * VIRTUAL FILES: Sometimes virtual files are created; their location tends to be /FileName.java which cannot be resolved. Optimally speaking we should find the 'source' of the virtual code and use IT for determining lombok.config, but that may not be feasible. If not, can we get at project or at least workspace?
+		// * Either way there are sufficiently many WTF situations, that in case of error, as painful as this is, we should just carry on and not apply lombok.config, though at least if we don't recognize the scenario we should write a log file imploring the user to send us a bunch of feedback on the situation.
+		// Relevant issues: Comment 2 on #683, all of #682
 		if (!skipEclipseWorkspaceBasedFileResolver) {
+//			if (Boolean.FALSE) throw new IllegalArgumentException("Here's the alt strat result: " + getAlternativeAbsolutePathDEBUG());
 			try {
-				return EclipseWorkspaceBasedFileResolver.resolve(getFileName());
+				/*if (fileName.startsWith("/") && fileName.indexOf('/', 1) > -1) */
+				try {
+					return EclipseWorkspaceBasedFileResolver.resolve(fileName);
+				} catch (IllegalArgumentException e) {
+					EclipseHandlerUtil.warning("Finding 'lombok.config' file failed for '" + fileName + "'", e);
+//					String msg = e.getMessage();
+//					if (msg != null && msg.startsWith("Path must include project and resource name")) {
+//						// We shouldn't throw an exception at all, but we can't reproduce this so we need help from our users to figure this out.
+//						// Let's bother them with an error that slows their eclipse down to a crawl and makes it unusable.
+//						throw new IllegalArgumentException("Path resolution for lombok.config failed. Path: " + fileName + " -- package of this class: " + this.getPackageDeclaration());
+//					} else throw e;
+				}
 			} catch (NoClassDefFoundError e) {
 				skipEclipseWorkspaceBasedFileResolver = true;
 			}
@@ -80,12 +122,70 @@ public class EclipseAST extends AST<EclipseAST, EclipseNode, ASTNode> {
 		
 		// Our fancy workspace based source file to absolute disk location algorithm only works in a fully fledged eclipse.
 		// This fallback works when using 'ecj', which has a much simpler project/path system. For example, no 'linked' resources.
-		return new File(getFileName()).getAbsoluteFile().toURI();
+		
+		try {
+			return new File(fileName).getAbsoluteFile().toURI();
+		} catch (Exception e) {
+			// This is a temporary workaround while we try and gather all the various exotic shenanigans where lombok.config resolution is not going to work!
+			return null;
+		}
 	}
+	
+//	/** This is ongoing research for issues with lombok.config resolution. */
+//	@SuppressWarnings("unused") private String getAlternativeAbsolutePathDEBUG() {
+//		try {
+//			ICompilationUnit cu = this.compilationUnitDeclaration.compilationResult.compilationUnit;
+//			
+//			if (cu instanceof Openable) {
+//				String x = ((Openable) cu).getResource().getFullPath().makeAbsolute().toString();
+//				int lastLoc = x.lastIndexOf('/');
+//				x = x.substring(0, lastLoc + 1) + "lombok.config";
+//				URI lombokConfigLoc = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(x)).getLocationURI();
+//				InputStream in = ResourcesPlugin.getWorkspace().getRoot().getFile(ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(x)).getFullPath()).getContents(true);
+//				byte[] b = new byte[100000];
+//				int p = 0;
+//				while (true) {
+//					int r = in.read(b, p, b.length - p);
+//					if (r == -1) break;
+//					p += r;
+//				}
+//				in.close();
+//				return "(Contents of lombok.config: " + new String(b, 0, p, "UTF-8");
+//
+////				return "(alt strategy result C: '" + ((Openable) cu).getResource().getFullPath().makeAbsolute().toString() + "'): resolved: " + EclipseWorkspaceBasedFileResolver.resolve(((Openable) cu).getResource().getFullPath().makeAbsolute().toString());
+//			}
+//			if (cu instanceof SourceFile) {
+//				String cuFileName = new String(((SourceFile) cu).getFileName());
+//				String cuIFilePath = ((SourceFile) cu).resource.getFullPath().toString();
+//				return "(alt strategy result A: \"" + cuFileName + "\" B: \"" + cuIFilePath + "\")";
+//			}
+//			return "(alt strategy failed: cu isn't a SourceFile or Openable but a " + cu.getClass() + ")";
+//		} catch (Exception e) {
+//			return "(alt strategy failed: " + e + ")";
+//		}
+//	}
 	
 	private static class EclipseWorkspaceBasedFileResolver {
 		public static URI resolve(String path) {
-			return ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(path)).getLocationURI();
+			/* eclipse issue: When creating snippets, for example to calculate 'find callers', refactor scripts, save actions, etc,
+			 * eclipse creates a psuedo-file whose path is simply "/SimpleName.java", which cannot be turned back into a real location.
+			 * What we really need to do is find out which file is the source of this script job and use its directory instead. For now,
+			 * we just go with all defaults; these operations are often not sensitive to proper lomboking or aren't even lomboked at all.
+			 * 
+			 * Reliable way to reproduce this (Kepler, possibly with JDK8 beta support):
+			 * * Have a method, called once by some code in another class.
+			 * * Refactor it with the 'change method signature' refactor script, and add a parameter and hit 'ok'.
+			 */
+			if (path == null || path.indexOf('/', 1) == -1) {
+				return null;
+			}
+			try {
+				return ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(path)).getLocationURI();
+			} catch (Exception e) {
+				// One of the exceptions that can occur is IllegalStateException (during getWorkspace())
+				// if you try to run this while eclipse is shutting down.
+				return null;
+			}
 		}
 	}
 	

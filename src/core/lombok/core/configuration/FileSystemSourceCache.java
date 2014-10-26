@@ -34,17 +34,40 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.ConfigurationKeys;
 import lombok.core.configuration.ConfigurationSource.Result;
+import lombok.core.debug.ProblemReporter;
 
 public class FileSystemSourceCache {
-	private static String LOMBOK_CONFIG_FILENAME = "lombok.config";
+	private static final String LOMBOK_CONFIG_FILENAME = "lombok.config";
 	private static final long RECHECK_FILESYSTEM = TimeUnit.SECONDS.toMillis(2);
-	private static final long MISSING = -1; 
+	private static final long NEVER_CHECKED = -1;
+	private static final long MISSING = -88; // Magic value; any lombok.config with this exact epochmillis last modified will never be read, so, let's ensure nobody accidentally has one with that exact last modified stamp.
 	
 	private final ConcurrentMap<File, Content> cache = new ConcurrentHashMap<File, Content>();
 	
 	public Iterable<ConfigurationSource> sourcesForJavaFile(URI javaFile, ConfigurationProblemReporter reporter) {
 		if (javaFile == null) return Collections.emptyList();
-		return sourcesForDirectory(new File(javaFile.normalize()).getParentFile(), reporter);
+		URI uri = javaFile.normalize();
+		if (!uri.isAbsolute()) uri = URI.create("file:" + uri.toString());
+		
+		File file;
+		try {
+			file = new File(uri);
+			if (!file.exists()) throw new IllegalArgumentException("File does not exist: " + uri);
+			return sourcesForDirectory(file.getParentFile(), reporter);
+		} catch (IllegalArgumentException e) {
+			// This means that the file as passed is not actually a file at all, and some exotic path system is involved.
+			// examples: sourcecontrol://jazz stuff, or an actual relative path (uri.isAbsolute() is completely different, that checks presence of schema!),
+			// or it's eclipse trying to parse a snippet, which has "/Foo.java" as uri.
+			// At some point it might be worth investigating abstracting away the notion of "I can read lombok.config if present in
+			// current context, and I can give you may parent context", using ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(javaFile) as basis.
+			
+			// For now, we just carry on as if there is no lombok.config. (intentional fallthrough)
+		} catch (Exception e) {
+			// Especially for eclipse's sake, exceptions here make eclipse borderline unusable, so let's play nice.
+			ProblemReporter.error("Can't find absolute path of file being compiled: " + javaFile, e);
+		}
+		
+		return Collections.emptyList();
 	}
 	
 	public Iterable<ConfigurationSource> sourcesForDirectory(URI directory, ConfigurationProblemReporter reporter) {
@@ -99,18 +122,17 @@ public class FileSystemSourceCache {
 	}
 	
 	ConfigurationSource getSourceForDirectory(File directory, ConfigurationProblemReporter reporter) {
-		if (!directory.exists() && !directory.isDirectory()) throw new IllegalArgumentException("Not a directory: " + directory);
 		long now = System.currentTimeMillis();
 		File configFile = new File(directory, LOMBOK_CONFIG_FILENAME);
 		
 		Content content = ensureContent(directory);
 		synchronized (content) {
-			if (content.lastChecked != MISSING && now - content.lastChecked < RECHECK_FILESYSTEM && getLastModified(configFile) == content.lastModified) {
+			if (content.lastChecked != NEVER_CHECKED && now - content.lastChecked < RECHECK_FILESYSTEM) {
 				return content.source;
 			}
 			content.lastChecked = now;
 			long previouslyModified = content.lastModified;
-			content.lastModified = getLastModified(configFile);
+			content.lastModified = getLastModifiedOrMissing(configFile);
 			if (content.lastModified != previouslyModified) content.source = content.lastModified == MISSING ? null : parse(configFile, reporter);
 			return content.source;
 		}
@@ -157,7 +179,7 @@ public class FileSystemSourceCache {
 		}
 	}
 	
-	private static final long getLastModified(File file) {
+	private static final long getLastModifiedOrMissing(File file) {
 		if (!file.exists() || !file.isFile()) return MISSING;
 		return file.lastModified();
 	}
@@ -174,7 +196,7 @@ public class FileSystemSourceCache {
 		}
 		
 		static Content empty() {
-			return new Content(null, MISSING, MISSING);
+			return new Content(null, MISSING, NEVER_CHECKED);
 		}
 	}
 }

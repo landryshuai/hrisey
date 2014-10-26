@@ -23,6 +23,26 @@ Hrisey Changelog
 Lombok Changelog
 ----------------
 
+### v1.14.8 (September 15th, 2014)
+* PERFORMANCE: The configuration system typically hit the filesystem twice per read configuration key instead of hardly ever. This is a continuation of [Issue #682](https://code.google.com/p/projectlombok/issues/detail?id=682).
+
+### v1.14.6 (September 2nd, 2014)
+* BUGFIX: Usage of `val` would break starting with JDK8 release `1.8.0_20`. [Issue #731](https://code.google.com/p/projectlombok/issues/detail?id=731)
+* BUGFIX: Depending on your eclipse project setup, releases v1.14.0 through v1.14.4 could noticably slow down your eclipse. [Issue #682](https://code.google.com/p/projectlombok/issues/detail?id=682).
+
+
+### v1.14.4 (July 1st, 2014)
+* BUGFIX: GWT produces errors in handlers on line 1 in any source files that use lombok; this has been fixed. [Issue #699](https://code.google.com/p/projectlombok/issues/detail?id=699)
+* BUGFIX-IN-PROGRESS: Many pathfinder issues in eclipse (see the bugfix in progress in v1.14.2) have now been fixed. [Issue #682](https://code.google.com/p/projectlombok/issues/detail?id=682)
+
+### v1.14.2  (June 10th, 2014)
+* BUGFIX: syntax highlighting in eclipse will become weird and auto-complete may stop working amongst other eclipse features in v1.14.0 (regression from v1.12.6). [Issue #688](https://code.google.com/p/projectlombok/issues/detail?id=688)
+* FEATURE: Added `@Tolerate`; put this annotation on any method or constructor and lombok will skip it when considering whether or not to generate a method or constructor. This is useful if the types of the parameters of your method do not clash with what lombok would generate.
+* FEATURE: Added config key `lombok.getter.noIsPrefix`, which lets you disable use and generation of `isFoo()`, instead going with `getFoo()`, for {@code boolean} fields.
+* BUGFIX: Errors in the eclipse log with `IndexOutOfBound: 2` in `ASTConverter.convertType`. [Issue #686](https://code.google.com/p/projectlombok/issues/detail?id=686)
+* BUGFIX-IN-PROGRESS: As yet unknown conditions in eclipse result in lots of `IllegalArgumentException` in the log with message "Path must include project and resource name". Also, 'invalid URL' or 'URI not absolute' errors can occur when using exotic file system abstractions such as Jazz. These bugs haven't been fixed, but instead of catastrophic failure, warning logs will be emitted instead. [Issue #682](https://code.google.com/p/projectlombok/issues/detail?id=682)
+* BUGFIX: mvn builds fail with a 'URI not absolute' exception. [Issue #683](https://code.google.com/p/projectlombok/issues/detail?id=683)
+
 ### v1.14.0 "Branching Cobra" (May 27th, 2014)
 * FEATURE: You can now configure aspects of lombok project wide (or even workspace wide, or just for a single package) via the [configuration system](http://projectlombok.org/features/configuration.html). You can configure many things; run `java -jar lombok.jar config -gv` for the complete list.
 * DEPRECATION: `@Delegate` has been moved to `lombok.experimental.Delegate`, and corner cases such as recursive delegation (delegating a type that itself has fields or methods annotated with `@Delegate`) are now error conditions. See the [feature documentation](http://projectlombok.org/features/experimental/Delegate.html) for more information.

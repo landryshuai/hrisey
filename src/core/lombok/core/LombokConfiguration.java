@@ -21,6 +21,8 @@
  */
 package lombok.core;
 
+import java.util.Collections;
+
 import lombok.core.configuration.BubblingConfigurationResolver;
 import lombok.core.configuration.ConfigurationKey;
 import lombok.core.configuration.ConfigurationProblemReporter;
@@ -29,8 +31,28 @@ import lombok.core.configuration.ConfigurationResolverFactory;
 import lombok.core.configuration.FileSystemSourceCache;
 
 public class LombokConfiguration {
+	private static final ConfigurationResolver NULL_RESOLVER = new ConfigurationResolver() {
+		@SuppressWarnings("unchecked") @Override public <T> T resolve(ConfigurationKey<T> key) {
+			if (key.getType().isList()) return (T) Collections.emptyList();
+			return null;
+		}
+	};
+	
 	private static FileSystemSourceCache cache = new FileSystemSourceCache();
-	private static ConfigurationResolverFactory configurationResolverFactory = createFileSystemBubblingResolverFactory();
+	private static ConfigurationResolverFactory configurationResolverFactory;
+	
+	static {
+		if (System.getProperty("lombok.disableConfig") != null) {
+			configurationResolverFactory = new ConfigurationResolverFactory() {
+				@Override public ConfigurationResolver createResolver(AST<?, ?, ?> ast) {
+					return NULL_RESOLVER;
+				}
+			};
+		}
+		else {
+			configurationResolverFactory = createFileSystemBubblingResolverFactory();
+		}
+	}
 	
 	private LombokConfiguration() {
 		// prevent instantiation
