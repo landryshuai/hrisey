@@ -29,8 +29,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.lang.model.element.Modifier;
+import javax.lang.model.type.TypeKind;
 
 import lombok.core.AnnotationValues;
+import lombok.javac.Javac;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
 import lombok.javac.JavacResolution;
@@ -76,24 +78,24 @@ import com.sun.tools.javac.util.Name;
 @ProviderFor(JavacAnnotationHandler.class)
 public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	
-	private static final String[] readWriteIdents = new String[TypeTags.TypeTagCount];
+	private static final Map<TypeKind, String> readWriteIdents = new HashMap<TypeKind, String>();
 	static {
-		readWriteIdents[TypeTags.BYTE] = "Byte";
-		readWriteIdents[TypeTags.DOUBLE] = "Double";
-		readWriteIdents[TypeTags.FLOAT] = "Float";
-		readWriteIdents[TypeTags.INT] = "Int";
-		readWriteIdents[TypeTags.LONG] = "Long";
+		readWriteIdents.put(TypeKind.BYTE, "Byte");
+		readWriteIdents.put(TypeKind.DOUBLE, "Double");
+		readWriteIdents.put(TypeKind.FLOAT, "Float");
+		readWriteIdents.put(TypeKind.INT, "Int");
+		readWriteIdents.put(TypeKind.LONG, "Long");
 	}
 	
-	private static final String[] readWriteArrayIdents = new String[TypeTags.TypeTagCount];
+	private static final Map<TypeKind, String> readWriteArrayIdents = new HashMap<TypeKind, String>();
 	static {
-		readWriteArrayIdents[TypeTags.BOOLEAN] = "BooleanArray";
-		readWriteArrayIdents[TypeTags.BYTE] = "ByteArray";
-		readWriteArrayIdents[TypeTags.CHAR] = "CharArray";
-		readWriteArrayIdents[TypeTags.DOUBLE] = "DoubleArray";
-		readWriteArrayIdents[TypeTags.FLOAT] = "FloatArray";
-		readWriteArrayIdents[TypeTags.INT] = "IntArray";
-		readWriteArrayIdents[TypeTags.LONG] = "LongArray";
+		readWriteArrayIdents.put(TypeKind.BOOLEAN, "BooleanArray");
+		readWriteArrayIdents.put(TypeKind.BYTE, "ByteArray");
+		readWriteArrayIdents.put(TypeKind.CHAR, "CharArray");
+		readWriteArrayIdents.put(TypeKind.DOUBLE, "DoubleArray");
+		readWriteArrayIdents.put(TypeKind.FLOAT, "FloatArray");
+		readWriteArrayIdents.put(TypeKind.INT, "IntArray");
+		readWriteArrayIdents.put(TypeKind.LONG, "LongArray");
 	}
 	
 	private static final Map<String, String> readWriteSymbolMap = new HashMap<String, String>();
@@ -206,8 +208,8 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 		statements.addAll(createWrites(type));
 		JCBlock body = maker.Block(0, statements.toList());
 		
-		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(0), type.toName("dest"), toExpression(type, "android.os.Parcel"), null);
-		JCVariableDecl flagsParam = maker.VarDef(maker.Modifiers(0), type.toName("flags"), maker.TypeIdent(CTC_INT), null);
+		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(Flags.PARAMETER), type.toName("dest"), toExpression(type, "android.os.Parcel"), null);
+		JCVariableDecl flagsParam = maker.VarDef(maker.Modifiers(Flags.PARAMETER), type.toName("flags"), maker.TypeIdent(CTC_INT), null);
 		List<JCVariableDecl> parameters = List.<JCVariableDecl>of(parcelParam, flagsParam);
 		
 		JCMethodDecl md = maker.MethodDef(maker.Modifiers(Flags.PUBLIC), type.toName("writeToParcel"), maker.TypeIdent(CTC_VOID), List.<JCTypeParameter>nil(), parameters, List.<JCExpression>nil(), body, null);
@@ -216,7 +218,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	
 	private boolean hasParcelableBaseClass(JavacNode classNode) {
 		JCClassDecl classDecl = (JCClassDecl) classNode.get();
-		if (classDecl.getExtendsClause() == null) {
+		if (Javac.getExtendsClause(classDecl) == null) {
 			return false;
 		} else {
 			return true;
@@ -243,7 +245,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 		statements.addAll(createConstructorAssignments(type));
 		JCBlock body = maker.Block(0, statements.toList());
 		
-		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(0), type.toName("source"), toExpression(type, "android.os.Parcel"), null);
+		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(Flags.PARAMETER), type.toName("source"), toExpression(type, "android.os.Parcel"), null);
 		List<JCVariableDecl> parameters = List.<JCVariableDecl>of(parcelParam);
 		
 		JCMethodDecl md = maker.MethodDef(maker.Modifiers(isFinal ? 0 : Flags.PROTECTED), type.toName("<init>"), null, List.<JCTypeParameter>nil(), parameters, List.<JCExpression>nil(), body, null);
@@ -305,24 +307,24 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	private JCStatement createSimpleWriteStatement(JavacNode classNode, JCExpression fromValue, Type fromValueType) {
 		JavacTreeMaker maker = classNode.getTreeMaker();
 		JCExpression writeExpression = null;
-		if (fromValueType.tag == TypeTags.BOOLEAN) {
+		if (fromValueType.getKind() == TypeKind.BOOLEAN) {
 			// dest.writeInt(this.boolField ? 1 : 0);
 			JCConditional boolToInt = maker.Conditional(fromValue, maker.Literal(CTC_INT, 1), maker.Literal(CTC_INT, 0));
 			JCExpression writeIntExpression = toExpression(classNode, "dest.writeInt");
 			JCMethodInvocation writeIntInvocation = maker.Apply(null, writeIntExpression, List.<JCExpression>of(boolToInt));
 			return maker.Exec(writeIntInvocation);
-		} else if (readWriteIdents[fromValueType.tag] != null) {
+		} else if (readWriteIdents.get(fromValueType.getKind()) != null) {
 			// dest.writeDouble(this.primitiveField);
-			writeExpression = toExpression(classNode, "dest.write" + readWriteIdents[fromValueType.tag]);
-		} else if (fromValueType.tag == TypeTags.ARRAY) {
+			writeExpression = toExpression(classNode, "dest.write" + readWriteIdents.get(fromValueType.getKind()));
+		} else if (fromValueType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType) fromValueType;
-			if (readWriteArrayIdents[arrayType.elemtype.tag] != null) {
+			if (readWriteArrayIdents.get(arrayType.elemtype.getKind()) != null) {
 				// dest.writeCharArray(this.primitiveArray);
-				writeExpression = toExpression(classNode, "dest.write" + readWriteArrayIdents[arrayType.elemtype.tag]);
+				writeExpression = toExpression(classNode, "dest.write" + readWriteArrayIdents.get(arrayType.elemtype.getKind()));
 			} else if (readWriteArraySymbolMap.get(arrayType.elemtype.tsym.toString()) != null) {
 				writeExpression = toExpression(classNode, "dest.write" + readWriteArraySymbolMap.get(arrayType.elemtype.tsym.toString()));
 			}
-		} else if (fromValueType.tag == TypeTags.CLASS) {
+		} else if (fromValueType instanceof ClassType) {
 			ClassType classType = (ClassType) fromValueType;
 			if (readWriteSymbolMap.get(fromValueType.tsym.toString()) != null) {
 				writeExpression = toExpression(classNode, "dest.write" + readWriteSymbolMap.get(fromValueType.tsym.toString()));
@@ -344,7 +346,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	
 	private JCStatement createParcelablesWriteStatement(JavacNode classNode, JCExpression fromValue, Type fromValueType) {
 		JavacTreeMaker maker = classNode.getTreeMaker();
-		if (fromValueType.tag == TypeTags.CLASS) {
+		if (fromValueType instanceof ClassType) {
 			ClassType classType = (ClassType) fromValueType;
 			if (implementsParcelable(classType)) {
 				if (isFinal(classType)) {
@@ -367,7 +369,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createArrayWriteStatement(JavacNode classNode, JCExpression fromValue, Type fromValueType, int level) {
-		if (fromValueType.tag == TypeTags.ARRAY) {
+		if (fromValueType instanceof ArrayType) {
 			JavacTreeMaker maker = classNode.getTreeMaker();
 			JCExpression fromValueEqualsNull = maker.Binary(CTC_EQUAL, fromValue, maker.Literal(CTC_BOT, null));
 			JCExpression writeInt = toExpression(classNode, "dest.writeInt");
@@ -393,7 +395,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createListWriteStatement(JavacNode classNode, JCExpression fromValue, Type fromValueType, int level) {
-		if (fromValueType.tag == TypeTags.CLASS) {
+		if (fromValueType instanceof ClassType) {
 			String symbol = fromValueType.tsym.toString();
 			if ("java.util.List".equals(symbol)
 					|| "java.util.ArrayList".equals(symbol)
@@ -429,7 +431,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createMapWriteStatement(JavacNode classNode, JCExpression fromValue, Type fromValueType, int level) {
-		if (fromValueType.tag == TypeTags.CLASS) {
+		if (fromValueType instanceof ClassType) {
 			String symbol = fromValueType.tsym.toString();
 			if ("java.util.Map".equals(symbol)
 					|| "java.util.HashMap".equals(symbol)
@@ -470,7 +472,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 
 	private JCStatement createOtherWriteStatement(JavacNode classNode, JCExpression fromValue, Type fromValueType) {
-		if (fromValueType.tag == TypeTags.CLASS) {
+		if (fromValueType instanceof ClassType) {
 			String symbol = fromValueType.tsym.toString();
 			if (boxedPrimitivesMap.containsKey(symbol)) {
 				JavacTreeMaker maker = classNode.getTreeMaker();
@@ -570,22 +572,22 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	private JCStatement createSimpleReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType) {
 		JavacTreeMaker maker = classNode.getTreeMaker();
 		JCExpression readExpression = null;
-		if (assignToType.tag == TypeTags.BOOLEAN) {
+		if (assignToType.getKind() == TypeKind.BOOLEAN) {
 			JCExpression readIntExpression = toExpression(classNode, "source.readInt");
 			JCMethodInvocation readIntInvocation = maker.Apply(null, readIntExpression, List.<JCExpression>nil());
 			JCBinary notEqualTo0 = maker.Binary(CTC_NOT_EQUAL, readIntInvocation, maker.Literal(CTC_INT, 0));
 			JCAssign assign = maker.Assign(assignTo, notEqualTo0);
 			return maker.Exec(assign);
-		} else if (readWriteIdents[assignToType.tag] != null) {
-			readExpression = toExpression(classNode, "source.read" + readWriteIdents[assignToType.tag]);
-		} else if (assignToType.tag == TypeTags.ARRAY) {
+		} else if (readWriteIdents.get(assignToType.getKind()) != null) {
+			readExpression = toExpression(classNode, "source.read" + readWriteIdents.get(assignToType.getKind()));
+		} else if (assignToType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType) assignToType;
-			if (readWriteArrayIdents[arrayType.elemtype.tag] != null) {
-				readExpression = toExpression(classNode, "source.create" + readWriteArrayIdents[arrayType.elemtype.tag]);
+			if (readWriteArrayIdents.get(arrayType.elemtype.getKind()) != null) {
+				readExpression = toExpression(classNode, "source.create" + readWriteArrayIdents.get(arrayType.elemtype.getKind()));
 			} else if (readWriteArraySymbolMap.get(arrayType.elemtype.tsym.toString()) != null) {
 				readExpression = toExpression(classNode, "source.create" + readWriteArraySymbolMap.get(arrayType.elemtype.tsym.toString()));
 			}
-		} else if (assignToType.tag == TypeTags.CLASS) {
+		} else if (assignToType instanceof ClassType) {
 			ClassType classType = (ClassType) assignToType;
 			if (readWriteSymbolMap.get(assignToType.tsym.toString()) != null) {
 				readExpression = toExpression(classNode, "source.read" + readWriteSymbolMap.get(assignToType.tsym.toString()));
@@ -608,7 +610,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	
 	private JCStatement createParcelablesReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType) {
 		JavacTreeMaker maker = classNode.getTreeMaker();
-		if (assignToType.tag == TypeTags.CLASS) {
+		if (assignToType instanceof ClassType) {
 			ClassType classType = (ClassType) assignToType;
 			if (implementsParcelable(classType)) {
 				if (isFinal(classType)) {
@@ -634,7 +636,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createArrayReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType, int level) {
-		if (assignToType.tag == TypeTags.ARRAY) {
+		if (assignToType instanceof ArrayType) {
 			Type childAssignToType = ((ArrayType) assignToType).elemtype;
 			JavacTreeMaker maker = classNode.getTreeMaker();
 			JCExpression readInt = toExpression(classNode, "source.readInt");
@@ -679,7 +681,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createListReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType, int level) {
-		if (assignToType.tag == TypeTags.CLASS) {
+		if (assignToType instanceof ClassType) {
 			String symbol = assignToType.tsym.toString();
 			if ("java.util.List".equals(symbol)
 					|| "java.util.ArrayList".equals(symbol)
@@ -740,7 +742,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createMapReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType, int level) {
-		if (assignToType.tag == TypeTags.CLASS) {
+		if (assignToType instanceof ClassType) {
 			String symbol = assignToType.tsym.toString();
 			if ("java.util.Map".equals(symbol)
 					|| "java.util.HashMap".equals(symbol)
@@ -804,7 +806,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	}
 	
 	private JCStatement createOtherReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType) {
-		if (assignToType.tag == TypeTags.CLASS) {
+		if (assignToType instanceof ClassType) {
 			String symbol = assignToType.tsym.toString();
 			if (boxedPrimitivesMap.containsKey(symbol)) {
 				JavacTreeMaker maker = classNode.getTreeMaker();
@@ -837,7 +839,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	private JCStatement createValueReadStatement(JavacNode classNode, JCExpression assignTo, Type assignToType) {
 		JavacTreeMaker maker = classNode.getTreeMaker();
 		JCExpression classLoaderParam;
-		if (assignToType.tag == TypeTags.CLASS) {
+		if (assignToType instanceof ClassType) {
 			classLoaderParam = toExpression(classNode, assignToType.tsym.toString() + ".class.getClassLoader");
 			classLoaderParam = maker.Apply(null, classLoaderParam, List.<JCExpression>nil());
 		} else {
@@ -874,7 +876,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 		JCClassDecl parentTypeDecl = (JCClassDecl) parentType.get();
 		JavacTreeMaker maker = type.getTreeMaker();
 		
-		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(0), type.toName("source"), toExpression(type, "android.os.Parcel"), null);
+		JCVariableDecl parcelParam = maker.VarDef(maker.Modifiers(Flags.PARAMETER), type.toName("source"), toExpression(type, "android.os.Parcel"), null);
 		List<JCVariableDecl> parameters = List.<JCVariableDecl>of(parcelParam);
 		
 		JCExpression parentClassExpression = maker.Ident(parentTypeDecl.name);
@@ -889,7 +891,7 @@ public class ParcelableHandler extends JavacAnnotationHandler<Parcelable> {
 	
 	private void generateNewArrayMethod(JavacNode type, JavacNode parentType) {
 		JavacTreeMaker maker = type.getTreeMaker();
-		JCVariableDecl sizeParam = maker.VarDef(maker.Modifiers(0), type.toName("size"), maker.TypeIdent(CTC_INT), null);
+		JCVariableDecl sizeParam = maker.VarDef(maker.Modifiers(Flags.PARAMETER), type.toName("size"), maker.TypeIdent(CTC_INT), null);
 		
 		JCClassDecl parentTypeDecl = (JCClassDecl) parentType.get();
 		JCExpression newArray = maker.NewArray(maker.Ident(parentTypeDecl.name), List.<JCExpression>of(maker.Ident(type.toName("size"))), null);

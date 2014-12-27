@@ -34,6 +34,8 @@ import static lombok.javac.handlers.JavacHandlerUtil.*;
 
 import java.util.List;
 
+import javax.lang.model.type.TypeKind;
+
 import hrisey.Preferences;
 import hrisey.javac.handlers.util.FieldFinder;
 import hrisey.javac.handlers.util.FieldInfo;
@@ -49,6 +51,7 @@ import org.mangosdk.spi.ProviderFor;
 
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ArrayType;
+import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
@@ -97,11 +100,11 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	}
 	
 	private static boolean isComplexType(FieldInfo fieldInfo) {
-		int tag = fieldInfo.getType().tag;
-		if (tag == TypeTags.ARRAY) {
+		Type type = fieldInfo.getType();
+		if (type instanceof ArrayType) {
 			return true;
 		}
-		if (tag == TypeTags.CLASS) {
+		if (type instanceof ClassType) {
 			if (!"java.lang.String".equals(fieldInfo.getType().tsym.toString())) {
 				return true;
 			}
@@ -147,14 +150,14 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	}
 	
 	private static String getSuffixForField(FieldInfo fieldInfo) {
-		int tag = fieldInfo.getType().tag;
-		if (tag == TypeTags.BOOLEAN) {
+		TypeKind kind = fieldInfo.getType().getKind();
+		if (kind == TypeKind.BOOLEAN) {
 			return "Boolean";
-		} else if (tag == TypeTags.FLOAT) {
+		} else if (kind == TypeKind.FLOAT) {
 			return "Float";
-		} else if (tag == TypeTags.INT) {
+		} else if (kind == TypeKind.INT) {
 			return "Int";
-		} else if (tag == TypeTags.LONG || tag == TypeTags.DOUBLE) {
+		} else if (kind == TypeKind.LONG || kind == TypeKind.DOUBLE) {
 			return "Long";
 		} else {
 			return "String";
@@ -164,13 +167,13 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 	private static void addGetMethod(JavacNode classNode, FieldInfo fieldInfo) {
 		String methodSuffix = getSuffixForField(fieldInfo);
 		Expression defaultValue;
-		if (fieldInfo.getType().tag == TypeTags.DOUBLE) {
+		if (fieldInfo.getType().getKind() == TypeKind.DOUBLE) {
 			defaultValue = createCall("Double.doubleToLongBits", "this." + fieldInfo.getName());
 		} else {
 			defaultValue = createIdent("this." + fieldInfo.getName());
 		}
 		Expression returnedExpression = createCall("this.__prefs.get" + methodSuffix, createLiteral(fieldInfo.getName()), defaultValue);
-		if (fieldInfo.getType().tag == TypeTags.DOUBLE) {
+		if (fieldInfo.getType().getKind() == TypeKind.DOUBLE) {
 			returnedExpression = createCall("Double.longBitsToDouble", returnedExpression);
 		}
 		createMethod(PUBLIC, createType(fieldInfo.getType()), "get" + fieldInfo.getNamePascal(),
@@ -184,7 +187,7 @@ public class PreferencesHandler extends JavacAnnotationHandler<Preferences> {
 		String methodSuffix = getSuffixForField(fieldInfo);
 		Call edit = createCall("this.__prefs.edit");
 		Expression value;
-		if (fieldInfo.getType().tag == TypeTags.DOUBLE) {
+		if (fieldInfo.getType().getKind() == TypeKind.DOUBLE) {
 			value = createCall("Double.doubleToLongBits", fieldInfo.getName());
 		} else {
 			value = createIdent(fieldInfo.getName());

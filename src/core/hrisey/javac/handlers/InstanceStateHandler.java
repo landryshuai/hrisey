@@ -29,12 +29,19 @@ import static hrisey.javac.lang.ParameterCreator.createParam;
 import static hrisey.javac.lang.Primitive.VOID;
 import static hrisey.javac.lang.StatementCreator.*;
 import static lombok.javac.handlers.JavacHandlerUtil.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.lang.model.type.TypeKind;
+
 import hrisey.InstanceState;
 import hrisey.Parcelable;
 import hrisey.javac.handlers.util.FieldInfo;
 import hrisey.javac.lang.Modifier;
 import hrisey.javac.lang.Statement;
 import lombok.core.AnnotationValues;
+import lombok.javac.Javac;
 import lombok.javac.JavacAnnotationHandler;
 import lombok.javac.JavacNode;
 
@@ -53,16 +60,16 @@ import com.sun.tools.javac.util.ListBuffer;
 @ProviderFor(JavacAnnotationHandler.class)
 public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> {
 	
-	private static final String[] primitivesMap = new String[TypeTags.TypeTagCount];
+	private static final Map<TypeKind, String> primitivesMap = new HashMap<TypeKind, String>();
 	static {
-		primitivesMap[TypeTags.BOOLEAN] = "Boolean";
-		primitivesMap[TypeTags.BYTE] = "Byte";
-		primitivesMap[TypeTags.CHAR] = "Char";
-		primitivesMap[TypeTags.DOUBLE] = "Double";
-		primitivesMap[TypeTags.FLOAT] = "Float";
-		primitivesMap[TypeTags.INT] = "Int";
-		primitivesMap[TypeTags.LONG] = "Long";
-		primitivesMap[TypeTags.SHORT] = "Short";
+		primitivesMap.put(TypeKind.BOOLEAN, "Boolean");
+		primitivesMap.put(TypeKind.BYTE, "Byte");
+		primitivesMap.put(TypeKind.CHAR, "Char");
+		primitivesMap.put(TypeKind.DOUBLE, "Double");
+		primitivesMap.put(TypeKind.FLOAT, "Float");
+		primitivesMap.put(TypeKind.INT, "Int");
+		primitivesMap.put(TypeKind.LONG, "Long");
+		primitivesMap.put(TypeKind.SHORT, "Short");
 	}
 	
 	@Override
@@ -123,7 +130,7 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 	
 	private boolean isActivity(JavacNode classNode) {
 		JCClassDecl classDecl = (JCClassDecl) classNode.get();
-		return classDecl.getExtendsClause().type.tsym.toString().contains("Activity");
+		return Javac.getExtendsClause(classDecl).type.tsym.toString().contains("Activity");
 	}
 	
 	private void prependAssignmentStatement(JavacNode classNode, JCMethodDecl onCreate, FieldInfo f) {
@@ -172,7 +179,7 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 					return "CharSequenceArray";
 				}
 			}
-			return primitivesMap[elemType.tag] + "Array";
+			return primitivesMap.get(elemType.getKind()) + "Array";
 		} else if (field.getType() instanceof ClassType) {
 			String className = field.getType().tsym.toString();
 			if ("java.lang.String".equals(className)) {
@@ -212,7 +219,7 @@ public class InstanceStateHandler extends JavacAnnotationHandler<InstanceState> 
 				return "Parcelable";
 			}
 		}
-		return primitivesMap[field.getType().tag];
+		return primitivesMap.get(field.getType().getKind());
 	}
 	
 	private boolean implementsParcelable(ClassType classType) {
