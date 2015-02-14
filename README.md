@@ -1,6 +1,8 @@
 Hrisey [![Build Status](https://travis-ci.org/mg6maciej/hrisey.svg?branch=develop)](https://travis-ci.org/mg6maciej/hrisey)
 =======================
 
+[![Join the chat at https://gitter.im/mg6maciej/hrisey](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mg6maciej/hrisey?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Boilerplate code suppressor tool for Android platform based on [Project Lombok](http://projectlombok.org/).
 
 Usage
