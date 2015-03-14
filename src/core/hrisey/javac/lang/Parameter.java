@@ -24,6 +24,7 @@ package hrisey.javac.lang;
 import lombok.javac.JavacNode;
 import lombok.javac.JavacTreeMaker;
 
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 
 public class Parameter {
@@ -38,7 +39,7 @@ public class Parameter {
 
 	public JCVariableDecl create(JavacNode node) {
 		JavacTreeMaker maker = node.getTreeMaker();
-		JCVariableDecl parameter = maker.VarDef(maker.Modifiers(0), node.toName(varName), typeName.create(node), null);
+		JCVariableDecl parameter = maker.VarDef(maker.Modifiers(Flags.PARAMETER), node.toName(varName), typeName.create(node), null);
 		return parameter;
 	}
 }
