@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import java.util.List;
 
 @hrisey.Preferences

@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import hrisey.InstanceState;
 import android.app.Fragment;
 

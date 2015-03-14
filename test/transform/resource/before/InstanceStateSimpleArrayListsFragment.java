@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import android.app.Fragment;
 import android.os.Bundle;
 import java.util.ArrayList;

@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import android.app.Fragment;
 import android.os.Parcel;
 import android.os.Parcelable;

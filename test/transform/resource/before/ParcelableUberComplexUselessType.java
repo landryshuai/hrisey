@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import android.os.Bundle;
 import java.util.LinkedHashMap;
 import java.util.List;

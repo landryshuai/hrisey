@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import java.util.LinkedList;
 
 @hrisey.Parcelable

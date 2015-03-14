@@ -1,3 +1,4 @@
+//CONF: lombok.addGeneratedAnnotation = false
 import android.os.Parcelable;
 
 @hrisey.Parcelable
