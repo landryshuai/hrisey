@@ -1,5 +1,7 @@
 language: java
 
+sudo: false
+
 env:
   matrix:
     - JAVA_FOR_TESTS=setupJavaOpenJDK7TestEnvironment
