@@ -2,12 +2,12 @@ language: java
 
 env:
   matrix:
-    - JAVA_FOR_TESTS=OpenJDK7
-    - JAVA_FOR_TESTS=Oracle7
-    - JAVA_FOR_TESTS=Oracle8
+    - JAVA_FOR_TESTS=setupJavaOpenJDK7TestEnvironment
+    - JAVA_FOR_TESTS=setupJavaOracle7TestEnvironment
+    - JAVA_FOR_TESTS=setupJavaOracle8TestEnvironment
 
 before_script:
-  - ant setupJava{$JAVA_FOR_TESTS}TestEnvironment
+  - ant $JAVA_FOR_TESTS
   - mkdir -p lib/test/
   - cp android-lib/* lib/test/
 
